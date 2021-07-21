@@ -1,5 +1,20 @@
 # Wordpress : API REST
 
+## Contenu de la démo
+
+Dans cette démo, on explore :
+
+- exposition via l'API Rest d'un custom post type `Foobar` avec ses champs ACF
+
+## Exemples de requêtes
+
+## Fonctions et Hooks Wordpress pour l'API REST
+
+### Hooks
+- [`rest_api_init`](https://developer.wordpress.org/reference/hooks/rest_api_init/)
+### Fonctions
+
+
 ## Définitions et concepts de base
 
 ### Endpoints
@@ -25,7 +40,6 @@ Each endpoint requires a particular structure of input data, and returns data us
 ### Controller Classes
 
 Controller classes unify and coordinate all these various moving parts within a REST API response cycle. With a controller class you can manage the registration of routes & endpoints, handle requests, utilize schema, and generate API responses. A single class usually contains all of the logic for a given route, and a given route usually represents a specific type of data object within your WordPress site (like a custom post type or taxonomy).
-
 
 ### Global Parameters
 
@@ -56,3 +70,13 @@ On peut aussi faire un usage restrictif de `_embed`. Par exemple
 `/wp/v2/posts?_embed=author`
 
 ne va embarquer dans la réponse que l'auteur et pas les autres ressources embedables
+
+
+
+## Extending the REST API
+
+### Modifying Responses
+
+You may only need a small amount of data, but it’s important to keep in mind that the API is about exposing an interface to all clients, not just the feature you’re working on. Changing responses is dangerous.
+
+Adding fields is not dangerous, so if you need to modify data, it’s much better to duplicate the field instead with your modified data. Removing fields is never encouraged; if you need to get back a smaller subset of data, use the _fields parameter or work with contexts instead.
