@@ -1,0 +1,16 @@
+FROM node:10.2-alpine
+
+RUN mkdir -p /usr/src/app/
+
+WORKDIR /usr/src/app/
+
+COPY package.json package-lock.json ./
+
+RUN npm config set unsafe-perm true
+
+RUN npm --add-python-to-path='true' install -g gulp && npm install gulp
+
+RUN npm install
+
+COPY ./web/wp-content/themes ./web/wp-content/themes
+

@@ -1,0 +1,23 @@
+.wp-block-image {
+
+    img {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+}
+
+.is-style-circle-mask img,
+.is-style-rounded img {
+    border-radius: 20px;
+}
+
+.wp-block-image .aligncenter,
+.wp-block-image .alignleft,
+.wp-block-image .alignright,
+.wp-block-image.is-resized {
+
+    @media (max-width: 600px) {
+        display: block;
+    }
+}

@@ -1,0 +1,59 @@
+version: '3.4'
+
+services:
+
+  www:
+    build:
+      context: ./
+      dockerfile: Dockerfile-wp
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - project-network
+      - web
+    volumes:
+      - ./web/:/var/www/html/:rw
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+    links:
+      - db:mysql
+    environment:
+      WORDPRESS_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_TABLE_PREFIX: ${TABLE_PREFIX}
+    container_name: ${COMPOSE_PROJECT_NAME}-www
+    labels:
+      - "traefik.docker.network=web"
+      - "traefik.frontend.rule=Host:${DOCKER_DOMAIN}"
+      - "traefik.enable=true"
+      - "traefik.entryPoint=http"
+
+  db:
+    image: mysql:5.7
+    restart: always
+    networks:
+      - project-network
+    volumes:
+      - ./docker/mysql/dump/:/docker-entrypoint-initdb.d/
+      - ./docker/mysql/data/db:/var/lib/mysql
+    container_name: ${COMPOSE_PROJECT_NAME}-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  wpcli:
+    image: wordpress:cli
+    command: "--path=/var/www/html/"
+    networks:
+      - project-network
+    volumes:
+      - ./web/:/var/www/html/
+    links:
+      - db:mysql
+    depends_on:
+      - www
+    container_name: ${COMPOSE_PROJECT_NAME}-wpcli
+
+networks:
+  project-network:
+  web:
+    external: true

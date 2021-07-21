@@ -1,0 +1,16 @@
+#page {
+    overflow: hidden;
+}
+
+.entry-header {
+    padding-top: 80px;
+    padding-bottom: 30px;
+
+    @media (min-width: 576px) {
+        padding-top: 120px;
+    }
+}
+
+.entry-title {
+    font-size: em(50px);
+}

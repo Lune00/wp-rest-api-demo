@@ -1,0 +1,101 @@
+.entry-content,
+body#tinymce,
+body.mce-content-body {
+
+    h2,
+    .h2 {
+        font-size: em(32px);
+        margin-bottom: 1rem;
+    }
+
+    h3,
+    .h3 {
+        font-size: em(24px);
+        margin-bottom: 1rem;
+    }
+
+    h4,
+    .h4 {
+        font-size: em(20px);
+        margin-bottom: 1rem;
+    }
+
+    ul,
+    ol {
+        margin-bottom: 1rem;
+
+        li {
+            padding-left: 1.3em;
+            position: relative;
+
+            &::before {
+                content: '';
+                display: block;
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: currentColor;
+                position: absolute;
+                top: 0.65em;
+                left: 0;
+            }
+
+        }
+    }
+
+    ol {
+        counter-reset: item;
+
+        li::before {
+            content: counter(item) ". ";
+            counter-increment: item;
+            font-weight: bold;
+            color: currentColor;
+            width: auto;
+            height: auto;
+            background: transparent;
+            top: 0;
+        }
+    }
+
+    p {
+        margin-bottom: 1rem;
+    }
+
+    .chapo {
+        font-size: em(28px);
+        font-weight: normal;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    img.alignleft {
+        float: left;
+        margin: 0.5em 1em 0.5em 0;
+    }
+
+    img.aligncenter {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    img.alignright {
+        float: right;
+        margin: 0.5em 0 0.5em 1em;
+    }
+
+    .wp-block-image {
+        border-radius: 20px;
+        margin-bottom: 50px;
+        overflow: hidden;
+    }
+
+    a {
+        font-weight: bold;
+        text-decoration: underline;
+    }
+}

@@ -1,0 +1,57 @@
+#masthead {
+    position: fixed;
+    left: 0;
+    right: 0;
+    transition: $default-transition;
+    z-index: 11;
+
+    &.fixed {
+        background: $background-color;
+    }
+
+    .site-title {
+        width: 100px;
+        margin-bottom: 0;
+
+        img,
+        a {
+            display: block;
+        }
+
+        svg {
+            fill: currentColor;
+        }
+    }
+
+    .main-menu {
+        position: relative;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .menu-container {
+        position: static;
+    }
+}
+
+@media (min-width: 576px) {
+
+    #masthead {
+
+        .site-title {
+            width: 150px;
+        }
+    }
+}
+
+@media (min-width: 992px) {
+
+    #masthead {
+
+        .main-menu {
+            padding-top: 20px;
+            padding-bottom: 20px;
+            box-shadow: none;
+        }
+    }
+}

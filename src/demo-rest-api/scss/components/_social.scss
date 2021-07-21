@@ -1,0 +1,40 @@
+.social {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -5px;
+    margin-right: -5px;
+    align-items: center;
+
+    li {
+        padding-left: 5px;
+        padding-right: 5px;
+
+        a {
+            font-size: 1em;
+
+            &::before {
+                font-family: 'FontAwesome';
+            }
+
+            &.fb::before {
+                content: '\f09a';
+            }
+
+            &.tw::before {
+                content: '\f099';
+            }
+
+            &.yt::before {
+                content: '\f167';
+            }
+
+            &.lk::before {
+                content: '\f08c';
+            }
+
+            &.ig::before {
+                content: '\f16d';
+            }
+        }
+    }
+}

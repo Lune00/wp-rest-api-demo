@@ -1,0 +1,34 @@
+#colophon {
+
+    .footer {
+
+        .site-title {
+            max-width: 100px;
+        }
+    }
+
+    .site-info {
+        padding-top: 20px;
+        padding-bottom: 20px;
+
+        nav {
+
+            ul {
+                display: flex;
+                flex-wrap: wrap;
+
+                li {
+
+                    &::before {
+                        content: '-';
+                        margin: 0 15px;
+                    }
+
+                    &:first-child::before {
+                        display: none;
+                    }
+                }
+            }
+        }
+    }
+}

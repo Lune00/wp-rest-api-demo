@@ -1,0 +1,54 @@
+version: '3.4'
+
+services:
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:4.8.3
+    restart: always
+    networks:
+      - web
+      - project-network
+    depends_on:
+      - db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      PMA_HOST: db
+      PMA_ARBITRARY: 0
+    container_name: ${COMPOSE_PROJECT_NAME}-pma
+    labels:
+      - "traefik.docker.network=web"
+      - "traefik.frontend.rule=Host:pma.${DOCKER_DOMAIN}"
+      - "traefik.enable=true"
+      - "traefik.entryPoint=http"
+  gulp:
+    build:
+      context: ./
+      dockerfile: Dockerfile-gulp
+    tty: true
+    restart: always
+    volumes:
+      - ./:/usr/src/app:rw,cached
+      - ./web/wp-content/themes/:/usr/src/app/web/wp-content/themes:rw
+    depends_on:
+      - www
+    container_name: ${COMPOSE_PROJECT_NAME}-gulp
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.0
+    ports:
+        - "${SMTP_MAIL_PORT}:1025"
+        - "${HTTP_MAIL_PORT}:8025"
+    networks:
+        - project-network
+        - web
+    container_name: ${COMPOSE_PROJECT_NAME}-mail
+    labels:
+      - "traefik.docker.network=web"
+      - "traefik.port=8025"
+      - "traefik.frontend.rule=Host:mail.${DOCKER_DOMAIN}"
+      - "traefik.enable=true"
+      - "traefik.entryPoint=http"
+
+networks:
+  project-network:
+  web:
+    external: true

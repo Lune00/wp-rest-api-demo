@@ -1,0 +1,21 @@
+# Exclu tout
+*
+
+# Sauf .gitignore
+!.gitignore
+
+# Sauf data
+!data
+
+# Exclu le contenu de data
+data/*
+
+# Sauf dump
+!dump
+
+# Exclu le contenu de dump
+dump/*
+
+# Sauf .gitkeep
+!.gitkeep
+

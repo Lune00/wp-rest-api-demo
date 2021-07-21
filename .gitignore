@@ -1,0 +1,45 @@
+# Exclude all /web
+/web/*
+
+# Except favicons
+!/web/*icon*
+!/web/*android*
+!/web/mstile*
+!/web/safari*
+!/web/browserconfig.xml
+!/web/site.webmanifest
+
+# Except /web/wp-content/
+!/web/wp-content/
+
+# Exclude all wp-content
+/web/wp-content/*
+
+# Except themes folder
+!/web/wp-content/themes/
+
+# Exclude all themes
+/web/wp-content/themes/*
+
+# Except the theme
+!/web/wp-content/themes/demo-rest-api
+
+# Except plugins folder
+!/web/wp-content/plugins/
+
+# Exclude all plugins
+/web/wp-content/plugins/*
+
+# Except Goliath plugins
+!/web/wp-content/plugins/goliath*
+
+# Except mu-plugins
+!/web/wp-content/mu-plugins
+
+# Exclude all temporary or local files
+.env
+.sass-cache
+node_modules
+.DS_Store
+.idea/
+_notes

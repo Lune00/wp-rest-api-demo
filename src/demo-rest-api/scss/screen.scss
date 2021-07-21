@@ -1,0 +1,53 @@
+/*
+ * Studio Goliath
+ * Main stylesheet
+ *
+ *    __  _               _  _           ___        _  _         _    _
+ *   / _\| |_  _   _   __| |(_)  ___    / _ \ ___  | |(_)  __ _ | |_ | |__
+ *   \ \ | __|| | | | / _` || | / _ \  / /_\// _ \ | || | / _` || __|| '_ \
+ *   _\ \| |_ | |_| || (_| || || (_) |/ /_\\| (_) || || || (_| || |_ | | | |
+ *   \__/ \__| \__,_| \__,_||_| \___/ \____/ \___/ |_||_| \__,_| \__||_| |_|
+ *                                                     FRONT DESIGN
+ *
+ * @package    studiogoliath
+ * @subpackage wordpress theme
+ *
+ */
+
+@import
+    './bootstrap/bootstrap-reboot',
+ 	'./bootstrap/bootstrap-grid',
+ 	'./bootstrap/bootstrap';
+
+@import
+    './abstracts/variables',
+    './abstracts/mixins';
+
+@import
+    './plugins/slick',
+    './plugins/scrollreveal',
+    './plugins/gravity-forms',
+    './plugins/complianz';
+
+@import
+    './layout/body',
+    './layout/index',
+    './layout/frontpage',
+    './layout/page',
+    './layout/single';
+
+@import
+    './components/header',
+    './components/menu',
+    './components/content',
+    './components/entry-content',
+    './components/footer',
+    './components/button',
+    './components/pagination',
+    './components/gutenberg',
+    './components/social';
+
+@import
+    './blocks/section',
+    './blocks/icon',
+    './blocks/accordion';

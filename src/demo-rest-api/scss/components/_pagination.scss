@@ -1,0 +1,14 @@
+#pagination {
+
+    .nav-links {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+
+        > * {
+            margin: 5px;
+            padding: 10px;
+        }
+    }
+}
