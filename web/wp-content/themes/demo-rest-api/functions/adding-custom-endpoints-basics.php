@@ -12,17 +12,17 @@
 function my_awesome_func(WP_REST_Request $request): string
 {
 
-    var_dump($request);
+    // var_dump($request);
 
-    // $posts = get_posts(array(
-    //     'author' => $request['id'],
-    // ));
+    $posts = get_posts(array(
+        'author' => $request['id'],
+    ));
 
-    // if (empty($posts)) {
-    //     return 'No posts for this author';
-    // }
+    if (empty($posts)) {
+        return 'No posts for this author';
+    }
 
-    // return $posts[0]->post_title;
+    return $posts[0]->post_title . '. Want to buy that article for ' . $request['price'] . ' dollars ?';
 }
 
 
@@ -30,7 +30,8 @@ function my_awesome_func(WP_REST_Request $request): string
  * Callback pour montrer les différents moyens d'acceder aux paramètres
  * envoyés avec la requete, et voir comment ils sont classifiés
  */
-function test_params( WP_REST_Request $request ) {
+function test_params(WP_REST_Request $request)
+{
 
     $params = array(
         //On peut acceder directement au paramètre dans l'objet WP_REST_REQUEST
@@ -48,7 +49,15 @@ function test_params( WP_REST_Request $request ) {
         'file_params' => $request->get_file_params()
     );
     return $params;
-  }
+}
+
+
+
+function say_hello(WP_REST_Request $request)
+{
+    return 'Hi ' . $request['name'];
+}
+
 
 /**
  * Register custom routes
@@ -57,12 +66,23 @@ add_action('rest_api_init', function () {
 
     register_rest_route('myplugin/v1', '/author/(?P<id>\d+)', array(
         'methods' => WP_REST_Server::READABLE,
+        // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
         'callback' => 'my_awesome_func',
         'args' => array(
             'id' => array(
-                'validate_callback' => function($param, $request, $key){
+                'required' => true,
+                'type' => 'integer',
+                'description' => 'Id of an author',
+                'validate_callback' => function ($param, $request, $key) {
                     return is_numeric($param) && intval($param) !== 0;
                 }
+            ),
+            'price' => array(
+                'required' => true,
+                'type' => 'integer',
+                'description' => 'Price of something',
+                'minimum' => 10,
+                'maximum' => 100
             )
         )
     ));
@@ -70,5 +90,23 @@ add_action('rest_api_init', function () {
     register_rest_route('myplugin/v1', '/testparams/(?P<id>\d+)', array(
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'test_params'
+    ));
+
+    register_rest_route('myplugin/v1', '/sayhello/(?P<name>\S+)', array(
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'say_hello',
+        'args' => array(
+            'name' => array(
+                'sanitize_callback' => function ($value, $request, $param) {
+                    // It is as simple as returning the sanitized value.
+                    // return sanitize_text_field($value);
+                    return str_replace('a', '',$value);
+                },
+                'validate_callback' => function($param, $request, $key){
+                    return strlen($param) < 5;
+                },
+                'description' => 'Le nom. Doit faire moins de 5 caractères'
+            )
+        )
     ));
 });

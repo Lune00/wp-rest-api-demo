@@ -104,12 +104,36 @@ You may only need a small amount of data, but it’s important to keep in mind t
 **Adding fields is not dangerous**, so if you need to modify data, it’s much better to duplicate the field instead with your modified data. **Removing fields is never encouraged**; if you need to get back a smaller subset of data, use the `_fields` parameter or work with contexts instead.
 
 
-### Adding Custom Endpoints
+### Adding Custom Endpoints Doc
 
 See [doc](https://developer.wordpress.org/rest-api/extending-the-rest-api/adding-custom-endpoints/)
 
 
-#### Path Variable
+### Exemple
+```
+<?php
+add_action( 'rest_api_init', function () {
+  register_rest_route( 'myplugin/v1', '/author/(?P<id>\d+)', array(
+    'methods' => 'GET',
+    'callback' => 'my_awesome_func',
+    'args' => array(
+      'id' => array(
+        'validate_callback' => function($param, $request, $key) {
+          return is_numeric( $param );
+        },
+         'sanitize_callback' => function( $value, $request, $param ) {
+                // It is as simple as returning the sanitized value.
+                return sanitize_text_field( $value );
+        },
+
+      ),
+    ),
+  ) );
+} );
+```
+
+
+### Path Variable
 
 Quand on ajoute une route, on peut mettre un pattern pour match un path. Par exemple
 
@@ -118,4 +142,18 @@ Quand on ajoute une route, on peut mettre un pattern pour match un path. Par exe
 Ici `(?P<id>\d+)` est une *[path variable](https://developer.wordpress.org/rest-api/extending-the-rest-api/routes-and-endpoints/#path-variables)*, elle permet de créer des routes dynamiquement. Path variable est une expression régulière. Ici `\d+` indique qu'on attend une valeur numérique avec au moins un chiffre. `<id>` indique ici le nom que l'on retrouve dans l'objet `WP_REST_REQUEST` (passé à notre callback), dans les paramètres d'url (`$request->get_url_params()`). Le nom définit la clé sous laquelle la valeur est enregistrée.
 
 Format : `?P<{name}>{regex pattern}`
+
+
+### Validation callback
+
+Inspect data and validate. **A lieu avant la sanitization si elle existe.**
+
+### Sanitize callback
+
+Remove infos. Appliquée après validation, si la donnée est valide.
+
+If we did not have strict validation (eg an enum of accepted values) and accepted any string as a parameter, we would **definitely need to register a sanitize_callback**.
+
+
+### Return response
 
