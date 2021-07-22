@@ -57,17 +57,6 @@ Une requête à l'API REST de WP est representée par l'instance d'une classe `W
 
 >The API includes a number of global parameters (also called “meta-parameters”) which control how the API handles the request/response handling. These operate at a layer above the actual resources themselves, and are available on all resources.
 
-
-### Différence entre Authentification et Authorization
-
-#### Authentification 
-
-*Who you are ?* Verify you are who you say you are => Validating credentials
-
-#### Authorization 
-
-What you have access to ? **Occurs after Authentification**. *Ok, you are that, let see what you can do in the system*.
-
 #### `_fields`
 
 Get a subset of fields
@@ -206,3 +195,17 @@ Quelques status codes utiles pour bien comprendre les réponses renvoyées par l
 
 - 404 : endpoint n'existe pas, ressource non trouvable. Par exemple, si on appelle une route qui existe mais qui n'accepte que GET et qu'on la requete avec la méthode POST.
 - 400 : bad input data. Si un paramètre ne passe pas la validation
+
+
+
+### Sécurité : protéger les endpoints
+
+### Différence entre Authentification et Authorization
+
+#### Authentification 
+
+*Who you are ?* Verify you are who you say you are => Validating credentials
+
+#### Authorization 
+
+What you have access to ? **Occurs after Authentification**. *Ok, you are that, let see what you can do in the system*.
