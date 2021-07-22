@@ -53,17 +53,17 @@ Une requête à l'API REST de WP est representée par l'instance d'une classe `W
 
 >Controller classes unify and coordinate all these various moving parts within a REST API response cycle. With a controller class you can manage the registration of routes & endpoints, handle requests, utilize schema, and generate API responses. A single class usually contains all of the logic for a given route, and a given route usually represents a specific type of data object within your WordPress site (like a custom post type or taxonomy).
 
-### Global Parameters
+## Global Parameters
 
 >The API includes a number of global parameters (also called “meta-parameters”) which control how the API handles the request/response handling. These operate at a layer above the actual resources themselves, and are available on all resources.
 
-#### `_fields`
+### `_fields`
 
 Get a subset of fields
 
 `/wp/v2/posts?_fields=author,id,excerpt,title,link`
 
-#### `_embed` et `_links`
+### `_embed` et `_links`
 
 Embed embedable related resources. Sous la clé `_links` on peut voir les ressources liées à la ressource demandée. `_links` envoient uniquement les URI des ressources liées, pas les ressources elles-mêmes. Si un item de `_links` a une clé `embeddable": true` alors il peut être embarqués dans la même requête. On peut alors faire la requête
 
@@ -148,7 +148,7 @@ Remove infos. **Appliquée après validation**, si la donnée est valide.
 
 
 
-### Return response
+### Return Response
 
 La validation et la permission sont le premier niveau de défense : une requete peut être rejetée si les paramètres ne sont pas valides, si la méthode n'est pas autorisée etc. Les code status sont alors générés par l'API REST de WP.
 
@@ -198,7 +198,7 @@ Quelques status codes utiles pour bien comprendre les réponses renvoyées par l
 
 
 
-### Sécurité : protéger les endpoints
+## Sécurité : protéger les endpoints
 
 ### Différence entre Authentification et Authorization
 
