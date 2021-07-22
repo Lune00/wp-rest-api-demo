@@ -17,21 +17,23 @@ Dans cette démo, on explore :
 - [`rest_prepare_{$this->post_type}`](https://developer.wordpress.org/reference/hooks/rest_prepare_this-post_type/) : modifie la réponse. Utile pour attacher les champs ACF du post_type
 - [`rest_{$this->post_type}_query`](https://developer.wordpress.org/reference/hooks/rest_this-post_type_query/) : filtre la query construite pour récupérer la ressource. Possibilité de mofifier les args de la WP_QUERY
 
-- [`rest_api_init`](https://developer.wordpress.org/reference/hooks/rest_api_init/)
+- [`rest_api_init`](https://developer.wordpress.org/reference/hooks/rest_api_init/) : hook sur lequel enregistrer les routes avec `rest_register_route`. Permet de charger en mémoire que si l'API REST est chargée et utilisée.
 
 ### Fonctions
 
 
 ### Objects
 
-`WP_REST_Request` : l'objet envoyé à la callback inscrite sur le endpoint. Contient tous les arguments passés en paramètre de la requete
+- `WP_REST_Request` : l'objet envoyé à la callback inscrite sur le endpoint. Contient tous les arguments passés en paramètre de la requete
+
+- `WP_REST_Response` : l'objet retourné. Converti par WP API REST en JSON, retourné par le client.
 
 
 ## Définitions et concepts de base
 
 ### Endpoints
 
-Association d'une URI à une méthode
+Association **d'une URI et d'une méthode**. A ce couple est mappé une fonction à éxecuter, la `callback`.
 
 `{nom de domaine}/wp-json` : liste tous les endpoints
 
