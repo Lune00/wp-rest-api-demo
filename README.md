@@ -11,8 +11,14 @@ Dans cette démo, on explore :
 ## Fonctions et Hooks Wordpress pour l'API REST
 
 ### Hooks
+
 - [`rest_api_init`](https://developer.wordpress.org/reference/hooks/rest_api_init/)
+
 ### Fonctions
+
+
+### Exposer les champs ACF d'un post ou d'un custom post type
+[`rest_prepare_{post_type}`](https://developer.wordpress.org/reference/hooks/rest_prepare_this-post_type/)
 
 
 ## Définitions et concepts de base
