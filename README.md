@@ -225,14 +225,14 @@ function say_hello(WP_REST_Request $request)
 
 Quelques status codes utiles pour bien comprendre les réponses renvoyées par l'API.Réference [ici](https://restfulapi.net/http-status-codes/)
 
-- 404 : endpoint n'existe pas, ressource non trouvable. Par exemple, si on appelle une route qui existe mais qui n'accepte que GET et qu'on la requete avec la méthode POST.
 - 400 : bad input data. Si un paramètre ne passe pas la validation
-
+- 403 : Forbiden, pas l'authorization
+- 404 : endpoint n'existe pas, ressource non trouvable. Par exemple, si on appelle une route qui existe mais qui n'accepte que GET et qu'on la requete avec la méthode POST.
 
 
 ## Sécurité : protéger les endpoints
 
-### Différence entre Authentification et Authorization
+### Différence entre *Authentification* et *Authorization*
 
 #### Authentification 
 
@@ -260,4 +260,22 @@ Pour authentifier une requete AJAX envoyée par le Front, il va falloir passer �
 
 En clair, on ne peut pas utiliser ce système que lorsqu'on est authentifié grâce à un cookie (le cookie sert a authentifier, le nonce **sert uniquement** à verifier que la requête est envoyée depuis un document servi par le serveur, et éviter les attaques CSRF). Utile pour développer du front JS servi par WP, ou des plugins. Mais dans le cas d'un Wordpress utilisé seulement comme une API consommé par un projet *Single Page App* on ne pourra pas s'en servir (car on ne se log pas sur le WP, on ne va jamais visiter son domaine directement).
 
+Solution : pas de solution native pour le moment, utiliser un mode d'authentification implémenté par un plugin. Par exemple le mode *JWT Token*
+
+### Authentification par JWT TOKEN
+
 Solution sécuriée : utiliser le plugin [JSON Web Tokens](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/)
+
+#### Utilisation
+
+Le plugin ajoute un nouveau namespace `/jwt-auth/v1` et deux endpoints :
+
+- `/wp-json/jwt-auth/v1/token (POST)` : point d'entrée pour l'authentification. Permet de récupérer son token en échange de ses credentials (passé dans le body de la requete)
+
+Exemple en Curl
+```
+
+
+```
+
+- `/wp-json/jwt-auth/v1/token/validate (POST)` :

@@ -66,12 +66,17 @@ function say_hello(WP_REST_Request $request)
 add_action('rest_api_init', function () {
 
     register_rest_route('myplugin/v1', '/author/(?P<id>\d+)', array(
+
         'methods' => WP_REST_Server::READABLE,
+
         // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
         'callback' => 'my_awesome_func',
+
+        //Dire explicitement qu'une ressource est publique (specs WP, indiqué sinon dans le header de la réponse x-wp-doingitwrong)
         'permission_callback' => function(){
             return true;
         },
+
         'args' => array(
             'id' => array(
                 'required' => true,
