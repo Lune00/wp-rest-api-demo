@@ -73,3 +73,6 @@ function acf_values_of_post(array $fields_name, int $post_id)
     }
     return $values;
 }
+
+
+// TODO : Faire la même chose sur les Taxonomies, avec une Custom Taxo

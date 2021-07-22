@@ -5,20 +5,26 @@
 Dans cette démo, on explore :
 
 - exposition via l'API Rest d'un custom post type `Foobar` avec ses champs ACF
+- ajout de nouvelles routes et endpoint sur un autre namespace
+- validation, sanitization callback pour les arguments envoyés avec la requete
 
 ## Exemples de requêtes
 
-## Fonctions et Hooks Wordpress pour l'API REST
+## Fonctions, Hooks et Objects Wordpress pour l'API REST
 
 ### Hooks
+
+- [`rest_prepare_{$this->post_type}`](https://developer.wordpress.org/reference/hooks/rest_prepare_this-post_type/) : modifie la réponse. Utile pour attacher les champs ACF du post_type
+- [`rest_{$this->post_type}_query`](https://developer.wordpress.org/reference/hooks/rest_this-post_type_query/) : filtre la query construite pour récupérer la ressource. Possibilité de mofifier les args de la WP_QUERY
 
 - [`rest_api_init`](https://developer.wordpress.org/reference/hooks/rest_api_init/)
 
 ### Fonctions
 
 
-### Exposer les champs ACF d'un post ou d'un custom post type
-[`rest_prepare_{post_type}`](https://developer.wordpress.org/reference/hooks/rest_prepare_this-post_type/)
+### Objects
+
+`WP_REST_Request` : l'objet envoyé à la callback inscrite sur le endpoint. Contient tous les arguments passés en paramètre de la requete
 
 
 ## Définitions et concepts de base
@@ -51,6 +57,17 @@ Controller classes unify and coordinate all these various moving parts within a 
 
 The API includes a number of global parameters (also called “meta-parameters”) which control how the API handles the request/response handling. These operate at a layer above the actual resources themselves, and are available on all resources.
 
+
+### Différence entre Authentification et Authorization
+
+#### Authentification 
+
+who you are ? Verify you are who you say you are => Validating credentials
+
+#### Authorization 
+
+What you have access to ? Occurs after Authentification. Ok, you are that, let see what you can do in the system.
+
 #### `_fields`
 
 Get a subset of fields
@@ -78,11 +95,27 @@ On peut aussi faire un usage restrictif de `_embed`. Par exemple
 ne va embarquer dans la réponse que l'auteur et pas les autres ressources embedables
 
 
-
 ## Extending the REST API
 
-### Modifying Responses
+### On Modifying Responses
 
-You may only need a small amount of data, but it’s important to keep in mind that the API is about exposing an interface to all clients, not just the feature you’re working on. Changing responses is dangerous.
+You may only need a small amount of data, but it’s important to keep in mind that the API is about exposing an interface to all clients, not just the feature you’re working on. **Changing responses is dangerous**.
 
-Adding fields is not dangerous, so if you need to modify data, it’s much better to duplicate the field instead with your modified data. Removing fields is never encouraged; if you need to get back a smaller subset of data, use the _fields parameter or work with contexts instead.
+**Adding fields is not dangerous**, so if you need to modify data, it’s much better to duplicate the field instead with your modified data. **Removing fields is never encouraged**; if you need to get back a smaller subset of data, use the `_fields` parameter or work with contexts instead.
+
+
+### Adding Custom Endpoints
+
+See [doc](https://developer.wordpress.org/rest-api/extending-the-rest-api/adding-custom-endpoints/)
+
+
+#### Path Variable
+
+Quand on ajoute une route, on peut mettre un pattern pour match un path. Par exemple
+
+`/author/(?P<id>\d+)`
+
+Ici `(?P<id>\d+)` est une *[path variable](https://developer.wordpress.org/rest-api/extending-the-rest-api/routes-and-endpoints/#path-variables)*, elle permet de créer des routes dynamiquement. Path variable est une expression régulière. Ici `\d+` indique qu'on attend une valeur numérique avec au moins un chiffre. `<id>` indique ici le nom que l'on retrouve dans l'objet `WP_REST_REQUEST` (passé à notre callback), dans les paramètres d'url (`$request->get_url_params()`). Le nom définit la clé sous laquelle la valeur est enregistrée.
+
+Format : `?P<{name}>{regex pattern}`
+
