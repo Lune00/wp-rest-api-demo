@@ -9,7 +9,7 @@
  * @param array $data Options for the function.
  * @return string|null Post title for the latest, * or message if none.
  */
-function my_awesome_func(WP_REST_Request $request): string
+function my_awesome_func(WP_REST_Request $request)
 {
 
     // var_dump($request);
@@ -18,9 +18,9 @@ function my_awesome_func(WP_REST_Request $request): string
         'author' => $request['id'],
     ));
 
-    if (empty($posts)) {
-        return 'No posts for this author';
-    }
+    if (empty($posts)) 
+        return new WP_Error('no_author',"Cet auteur n'a pas écrit d'article",  array( 'status' => 404 ));
+    
 
     return $posts[0]->post_title . '. Want to buy that article for ' . $request['price'] . ' dollars ?';
 }
@@ -55,7 +55,8 @@ function test_params(WP_REST_Request $request)
 
 function say_hello(WP_REST_Request $request)
 {
-    return 'Hi ' . $request['name'];
+    $data = 'Hi ' . $request['name'];
+    return rest_ensure_response($data);
 }
 
 
@@ -98,12 +99,11 @@ add_action('rest_api_init', function () {
         'args' => array(
             'name' => array(
                 'sanitize_callback' => function ($value, $request, $param) {
-                    // It is as simple as returning the sanitized value.
                     // return sanitize_text_field($value);
                     return str_replace('a', '',$value);
                 },
                 'validate_callback' => function($param, $request, $key){
-                    return strlen($param) < 5;
+                    return strlen($param) <= 5;
                 },
                 'description' => 'Le nom. Doit faire moins de 5 caractères'
             )

@@ -39,34 +39,34 @@ Association d'une URI à une méthode
 
 Une requête à l'API REST de WP est representée par l'instance d'une classe `WP_REST_Request`.
 
-A WP_REST_Request object is automatically generated when you make an HTTP request to a registered API route. The data specified in this object (derived from the route URI or the JSON payload sent as a part of the request) determines what response you will get back out of the API.
+>A `WP_REST_Request` object is automatically generated when you make an HTTP request to a registered API route. The data specified in this object (derived from the route URI or the JSON payload sent as a part of the request) determines what response you will get back out of the API.
 
 ### Réponses
 
-Responses are the data you get back from the API. The `WP_REST_Response` class provides a way to interact with the response data returned by endpoints. Responses return the requested data, or can also be used to return errors if something goes wrong while fulfilling the request.
+>Responses are the data you get back from the API. The `WP_REST_Response` class provides a way to interact with the response data returned by endpoints. Responses return the requested data, or can also be used to return errors if something goes wrong while fulfilling the request.
 
 ### API Schema
 
-Each endpoint requires a particular structure of input data, and returns data using a defined and predictable structure. Those data structures are defined in the API Schema. The schema structures API data and provides a comprehensive list of all of the properties the API can return and which input parameters it can accept. Well-defined schema also provides one layer of security within the API, as it enables us to validate and sanitize the requests being made to the API. The Schema section explores this large topic further.
+>Each endpoint requires a particular structure of input data, and returns data using a defined and predictable structure. Those data structures are defined in the API Schema. The schema structures API data and provides a comprehensive list of all of the properties the API can return and which input parameters it can accept. Well-defined schema also provides one layer of security within the API, as it enables us to validate and sanitize the requests being made to the API. The Schema section explores this large topic further.
 
 ### Controller Classes
 
-Controller classes unify and coordinate all these various moving parts within a REST API response cycle. With a controller class you can manage the registration of routes & endpoints, handle requests, utilize schema, and generate API responses. A single class usually contains all of the logic for a given route, and a given route usually represents a specific type of data object within your WordPress site (like a custom post type or taxonomy).
+>Controller classes unify and coordinate all these various moving parts within a REST API response cycle. With a controller class you can manage the registration of routes & endpoints, handle requests, utilize schema, and generate API responses. A single class usually contains all of the logic for a given route, and a given route usually represents a specific type of data object within your WordPress site (like a custom post type or taxonomy).
 
 ### Global Parameters
 
-The API includes a number of global parameters (also called “meta-parameters”) which control how the API handles the request/response handling. These operate at a layer above the actual resources themselves, and are available on all resources.
+>The API includes a number of global parameters (also called “meta-parameters”) which control how the API handles the request/response handling. These operate at a layer above the actual resources themselves, and are available on all resources.
 
 
 ### Différence entre Authentification et Authorization
 
 #### Authentification 
 
-who you are ? Verify you are who you say you are => Validating credentials
+*Who you are ?* Verify you are who you say you are => Validating credentials
 
 #### Authorization 
 
-What you have access to ? Occurs after Authentification. Ok, you are that, let see what you can do in the system.
+What you have access to ? **Occurs after Authentification**. *Ok, you are that, let see what you can do in the system*.
 
 #### `_fields`
 
@@ -99,9 +99,9 @@ ne va embarquer dans la réponse que l'auteur et pas les autres ressources embed
 
 ### On Modifying Responses
 
-You may only need a small amount of data, but it’s important to keep in mind that the API is about exposing an interface to all clients, not just the feature you’re working on. **Changing responses is dangerous**.
+>You may only need a small amount of data, but it’s important to keep in mind that the API is about exposing an interface to all clients, not just the feature you’re working on. **Changing responses is dangerous**.
 
-**Adding fields is not dangerous**, so if you need to modify data, it’s much better to duplicate the field instead with your modified data. **Removing fields is never encouraged**; if you need to get back a smaller subset of data, use the `_fields` parameter or work with contexts instead.
+>**Adding fields is not dangerous**, so if you need to modify data, it’s much better to duplicate the field instead with your modified data. **Removing fields is never encouraged**; if you need to get back a smaller subset of data, use the `_fields` parameter or work with contexts instead.
 
 
 ### Adding Custom Endpoints Doc
@@ -150,10 +150,59 @@ Inspect data and validate. **A lieu avant la sanitization si elle existe.**
 
 ### Sanitize callback
 
-Remove infos. Appliquée après validation, si la donnée est valide.
+Remove infos. **Appliquée après validation**, si la donnée est valide.
 
-If we did not have strict validation (eg an enum of accepted values) and accepted any string as a parameter, we would **definitely need to register a sanitize_callback**.
+>If we did not have strict validation (eg an enum of accepted values) and accepted any string as a parameter, we would **definitely need to register a sanitize_callback**.
+
+
+### Permission Callback
+
 
 
 ### Return response
 
+La validation et la permission sont le premier niveau de défense : une requete peut être rejetée si les paramètres ne sont pas valides, si la méthode n'est pas autorisée etc. Les code status sont alors générés par l'API REST de WP.
+
+On peut retourner :
+- une valeur, automatiquement convertie au format JSON
+- une `WP_Error`, si erreur. Par défaut renvoie un status code 500 (internal server 
+error, generic). On peut préciser le status et le message
+
+`return new WP_Error( 'no_author', 'Invalid author', array( 'status' => 404 ) );`
+
+- une `WP_REST_Response` construite nous même (plus avancé)
+
+```
+<?php
+$data = array( 'some', 'response', 'data' );
+ 
+// Create the response object
+$response = new WP_REST_Response( $data );
+ 
+// Add a custom status code
+$response->set_status( 201 );
+ 
+// Add a custom header
+$response->header( 'Location', 'http://example.com/' );
+```
+
+Le plus souvent, si aucune erreur à renvoyer, utiliser `rest_ensure_response($data)`. Code 200 par défaut
+
+```
+function say_hello(WP_REST_Request $request)
+{
+    $data = 'Hi ' . $request['name'];
+    return rest_ensure_response($data);
+}
+```
+
+>When wrapping existing callbacks, you should always use `rest_ensure_response()` on the return value. This will take raw data returned from an endpoint and **automatically turn it into a WP_REST_Response for you**. (Note that WP_Error is not converted to a WP_REST_Response to allow proper error handling.)
+
+**Ne jamais appeler `wp_die(json_encode($data))` ou `wp_send_json($data)`**.
+
+#### Status code
+
+Quelques status codes utiles pour bien comprendre les réponses renvoyées par l'API.Réference [ici](https://restfulapi.net/http-status-codes/)
+
+- 404 : endpoint n'existe pas, ressource non trouvable. Par exemple, si on appelle une route qui existe mais qui n'accepte que GET et qu'on la requete avec la méthode POST.
+- 400 : bad input data. Si un paramètre ne passe pas la validation
