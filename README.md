@@ -148,6 +148,36 @@ Remove infos. **Appliquée après validation**, si la donnée est valide.
 
 ### Permission Callback
 
+>You must also register a permissions callback for the endpoint. This is a function that checks if the user can perform the action (reading, updating, etc) before the real callback is called. This allows the API to tell the client what actions they can perform on a given URL without needing to attempt the request first.
+
+```
+<?php
+add_action( 'rest_api_init', function () {
+  register_rest_route( 'myplugin/v1', '/author/(?P<id>\d+)', array(
+    'methods' => 'GET',
+    'callback' => 'my_awesome_func',
+    'args' => array(
+      'id' => array(
+        'validate_callback' => 'is_numeric'
+      ),
+    ),
+    'permission_callback' => function () {
+      return current_user_can( 'edit_others_posts' );
+    }
+```
+
+>**The permissions callback is run after remote authentication, which sets the current user.** This means you can use `current_user_can` to check if the user that has been authenticated has the appropriate capability for the action, or any other check based on current user ID. Where possible, you should always use `current_user_can`; **instead of checking if the user is logged in (authentication)**, check whether they can perform the action (authorization).
+
+
+>This callback should return **a boolean or a WP_Error instance**. 
+
+Fonctionne comme un filtre :
+
+- si retourne vrai : la requete est executée (callback appelée)
+- si retourne faux : acces a la ressource refusé (pas d'appel callback), retourne un message d'erreur par défaut au client
+- si retourne `WP_Error` : erreur retournée au client
+
+Comme la vérificiation de l'autorization a comme condition préalable l'authentification, si on renseigne une callback de permission il **faut authentifier l'auteur de la requete avant**. Sinon on reçoit une erreur `rest_forbidden`.
 
 
 ### Return Response
@@ -206,8 +236,28 @@ Quelques status codes utiles pour bien comprendre les réponses renvoyées par l
 
 #### Authentification 
 
-*Who you are ?* Verify you are who you say you are => Validating credentials
+*Who you are ?* Verify you are who you say you are => Validating credentials (login)
 
 #### Authorization 
 
 What you have access to ? **Occurs after Authentification**. *Ok, you are that, let see what you can do in the system*.
+
+
+### Authentifier la reqûete : système natif WP
+
+Sous WP, l'authentification se fait sur la base de cookie. Quand on s'authentifie, on recoit un cookie et celui-ci est envoyé dans chaque requete pour authentifier l'utilisateur. Après on peut donc utiliser l'user connecté pour faire nos tests d'autorisations.
+
+L'API REST embarque une technique de nonces (protection contre les CSRF).
+
+Pour authentifier une requete AJAX envoyée par le Front, il va falloir passer à chaque requete 
+
+- soit un paramètre `_wpnonce` (soit dans le body d'un POST soit dans l'url pour un GET)
+- soit dans le header sous la clef `X-WP-Nonce`
+
+>Note: Until recently, most software had spotty support for DELETE requests. For instance, PHP doesn’t transform the request body of a DELETE request into a super global. **As such, supplying the nonce as a header is the most reliable approach**.
+
+>**It is important to keep in mind that this authentication method relies on WordPress cookies. As a result this method is only applicable when the REST API is used inside of WordPress and the current user is logged in**. In addition, the current user must have the appropriate capability to perform the action being performed.
+
+En clair, on ne peut pas utiliser ce système que lorsqu'on est authentifié grâce à un cookie (le cookie sert a authentifier, le nonce **sert uniquement** à verifier que la requête est envoyée depuis un document servi par le serveur, et éviter les attaques CSRF). Utile pour développer du front JS servi par WP, ou des plugins. Mais dans le cas d'un Wordpress utilisé seulement comme une API consommé par un projet *Single Page App* on ne pourra pas s'en servir (car on ne se log pas sur le WP, on ne va jamais visiter son domaine directement).
+
+Solution sécuriée : utiliser le plugin [JSON Web Tokens](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/)

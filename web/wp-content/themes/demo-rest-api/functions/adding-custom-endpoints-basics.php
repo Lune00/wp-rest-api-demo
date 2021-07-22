@@ -69,6 +69,9 @@ add_action('rest_api_init', function () {
         'methods' => WP_REST_Server::READABLE,
         // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
         'callback' => 'my_awesome_func',
+        'permission_callback' => function(){
+            return true;
+        },
         'args' => array(
             'id' => array(
                 'required' => true,
@@ -90,12 +93,19 @@ add_action('rest_api_init', function () {
 
     register_rest_route('myplugin/v1', '/testparams/(?P<id>\d+)', array(
         'methods' => WP_REST_Server::READABLE,
-        'callback' => 'test_params'
+        'callback' => 'test_params',
+        'permission_callback' => function(){
+            return true;
+        }
     ));
 
     register_rest_route('myplugin/v1', '/sayhello/(?P<name>\S+)', array(
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'say_hello',
+        'permission_callback' => function(){
+            //Seul l'utilisateur avec id 1 peut consommer ce endpoint
+            return 1 === get_current_user_id();
+        },
         'args' => array(
             'name' => array(
                 'sanitize_callback' => function ($value, $request, $param) {
