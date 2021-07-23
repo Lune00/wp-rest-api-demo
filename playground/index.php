@@ -41,7 +41,9 @@ $data = file_get_contents($url);
 
             //Reqûetes envoyées depuis le navigateur, soumises à la SOP et CORS
 
-            fetch('http://wp-rest-api.test/wp-json/myplugin/v1/author/1?&price=50').then((response) => response.json()).then(($data) => console.log('GET d\'une route :', $data))
+            fetch('http://wp-rest-api.test/wp-json/wp/v2').then((response) => response.json()).then(($data) => console.log('GET d\'une route wordpress :', $data))
+
+            fetch('http://wp-rest-api.test/wp-json/myplugin/v1/author/1?&price=50').then((response) => response.json()).then(($data) => console.log('GET d\'une route custom :', $data))
 
             fetch('http://wp-rest-api.test/wp-json/jwt-auth/v1/token', {
                 method: "POST",
