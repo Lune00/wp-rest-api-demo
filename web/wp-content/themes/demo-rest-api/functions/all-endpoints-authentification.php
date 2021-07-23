@@ -13,10 +13,18 @@ function authentificate_all_endpoints($result)
         return $result;
     }
 
+    //Check si le endpoint demandé est sur la whitelist. La whitelist est une liste
+    //de endpoint ne nécessitant pas l'authentification
+
+    if (is_unauthentificated_endpoint()){
+        error_log('this endpoint is public (in a whitelist)');
+        return $result;
+    }
+
     // No authentication has been performed yet (par le plugin JWT Token du coup)
     // Return an error if user is not logged in.
     if (!is_user_logged_in()) {
-        error_log('unauthentificated request');
+        error_log('unauthentificated request, rejected.');
         return new WP_Error(
             'rest_not_logged_in',
             __('You are not currently logged in. No way'),
@@ -28,7 +36,89 @@ function authentificate_all_endpoints($result)
     // on logged-in requests
     return $result;
 }
-// add_filter('rest_authentication_errors', 'authentificate_all_endpoints');
+add_filter('rest_authentication_errors', 'authentificate_all_endpoints');
+
+/**
+ * Utilise une whitelist définissant des enpoints ne nécessitant pas l'authentification.
+ * Renvoie vrai si le endpoint(URI+method) est dans la whitelist, faux sinon
+ * Inspiré du plugin api-bearer https://wordpress.org/plugins/api-bearer-auth/#whitelist%20unauthenticated%20urls
+ */
+function is_unauthentificated_endpoint()
+{
+    //Notre whitelist par défaut
+    define('UNAUTHENTIFICATED_ENDPOINTS_DEFAULT', array(
+        //Le endpoint pour créer un token
+        WP_REST_Server::CREATABLE => array(
+            '/wp-json/jwt-auth/v1/token'
+        ),
+        WP_REST_Server::READABLE => array(
+            '/wp-json/wp/v2/posts',
+            '/wp-json'
+        )
+    ));
+
+    //On récupere l'url demandée (sans les paramètres de l'url)
+    $current_url = (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . strtok($_SERVER['REQUEST_URI'], '?');
+
+    error_log('endpoint demandé: ' . 'uri: ' . $current_url . ' method: ' .  $_SERVER['REQUEST_METHOD']);
+
+    $site_url = get_site_url();
+
+    error_log('site_url (nom domaine) : ' . $site_url);
+
+    /**
+     * Hook pour ajouter des endpoints a la liste par défaut si besoin
+     * Add URLs that should be avialble to unauthenticated users.
+     * Specify only the part after the site url, e.g. /wp-json/wp/v2/users
+     * Each URL will be prepended by the value of get_site_url()
+     * And each resulting URL will be put in between ^ and $ regular expression signs.
+     */
+    $custom_urls_whitelist = array();
+
+    /**
+     * On filtre les endpoints pour récupérer les urls associées à la méthode de la requete en cours
+     */
+    $custom_urls_whitelist = apply_filters('jwt_auth_unauthenticated_endpoints_filter', $custom_urls_whitelist, $_SERVER['REQUEST_METHOD']);
+
+    $default_urls_whitelist = array();
+
+    if (!empty(UNAUTHENTIFICATED_ENDPOINTS_DEFAULT[$_SERVER['REQUEST_METHOD']])) {
+        $default_urls_whitelist = UNAUTHENTIFICATED_ENDPOINTS_DEFAULT[$_SERVER['REQUEST_METHOD']];
+    }
+
+    //On merge la whitelist custom avec la whitelist par defaut
+    $urls_whitelist = array_merge($custom_urls_whitelist, $default_urls_whitelist);
+
+    write_log('La whitelist des urls sur la méthode ' . $_SERVER['REQUEST_METHOD']);
+    write_log($urls_whitelist);
+
+    //Si l'url demandée match une url dans la whitelist, on a une url (et un endpoint car on a filtré en amont sur la méthode) non authentifié (publique)
+    foreach ($urls_whitelist as $url) {
+        if (preg_match('@^' . $site_url . $url . '$@', $current_url)) {
+            return true;
+        }
+    }
+
+    //Cette url n'est pas dans la whitelist, on doit demander l'authentification
+    return false;
+}
+
+/**
+ * Utiliser le hook pour ajouter des endpoints custom a la whitelist
+ */
+add_filter('jwt_auth_unauthenticated_endpoints_filter', 'add_unauthentificated_endpoints_to_whitelist', 10, 2);
+function add_unauthentificated_endpoints_to_whitelist(array $custom_urls, string $request_method)
+{
+    switch ($request_method) {
+        case WP_REST_Server::CREATABLE:
+            $custom_urls[] = '/wp-json/myplugin/v1/something/?';
+            break;
+        case WP_REST_Server::READABLE:
+            $custom_urls[] = '/wp-json/myplugin/v1/something/other/?';
+            break;
+    }
+    return $custom_urls;
+}
 
 /**
  * Masquer l'information exposée sur {domain}/wp-json 
