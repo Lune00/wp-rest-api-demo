@@ -54,7 +54,7 @@ function is_unauthentificated_endpoint()
         WP_REST_Server::READABLE => array(
             '/wp-json',
             '/wp-json/wp/v2/posts',
-            //Le mieux serait de mettre des regex sur chaque route de la whitelist directement ?
+            //Si on veut gerer des urls dynamiques ajouter une regex sur la route concernée
             '/wp-json/myplugin/v1/sayhello'
         )
     ));
@@ -100,12 +100,8 @@ function is_unauthentificated_endpoint()
     //Si l'url demandée match une url dans la whitelist, on a une url (et un endpoint car on a filtré en amont sur la méthode) non authentifié (publique)
     foreach ($urls_whitelist as $url) {
 
-        //Match toutes les url jusqu'au prochain / (pas possible d'aller à un niveau en dessous)
-        //Pb : demande de renseigner dans la whitelist le slash
-        // if (preg_match("[^" . $site_url . $url . "[^/]*$]", $current_url)) {
-
-        //Par défaut: si on ouvre une url, on ouvre toutes ses urls dynamiquement
-        if (preg_match("[^" . $site_url . $url . "]", $current_url)) {
+        //Pour le moment c'est strict (exact match), pas de gestion des urls dynamiques
+        if (preg_match("[^" . $site_url . $url . "$]", $current_url)) {
             return true;
         }
     }
