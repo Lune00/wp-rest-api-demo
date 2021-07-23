@@ -321,16 +321,22 @@ Questions :
 
 Solutions possibles trouvées pour l'instant :
 
-- ajouter a chaque endpoint une `permission_callback` avec `user_can(wp_get_current_user(), {capability})`. L'authentification est implicitement demandée (semble bien et recommandé)
+- ajouter a chaque endpoint une `permission_callback` avec `user_can(wp_get_current_user(), {capability})`. L'authentification est implicitement demandée. **Semble bien et recommandé**
 
-- mettre les customs endpoints dans le namespace du plugin JWT Token `jwt-auth/v1`?? Tous les endpoints de ce namespace sont protégés par le plugin. Si le Token n'est pas présent ou invalide il rejette la requête pour nous ? Pas sûr que ce soit une bonne idée (c'est une suggestion lue  par un utilisateur)
+- mettre les customs endpoints dans le namespace du plugin JWT Token `jwt-auth/v1`?? Tous les endpoints de ce namespace sont protégés par le plugin. Si le Token n'est pas présent ou invalide il rejette la requête pour nous ? Pas sûr que ce soit une bonne idée (c'est une suggestion lue  par un utilisateur). **J'ai testé, ça marche pas. C'est comme les autres routes, si pas de Token présent dans la requête, pas de vérification**
 
 
 ### Authentifier tous les endpoints par défaut (natif wp + nos custom endpoint)
 
 La piste est donnée [ici](https://developer.wordpress.org/rest-api/frequently-asked-questions/#require-authentication-for-all-requests).
 
-Ca marche depuis une origine (projet playground). Mais ça ne marche pas si je requete directement l'API depuis le navigateur.
+Ca marche bien, le problème c'est que ça **bloque tous les endpoints**, y compris le endpoint pour récuperer le token. 
+
+Comment mettre en place une whitelist ?
+
+L'idée serait de mettre par défaut tous les endpoints en authentification JWT, et d'autoriser quelques endpoints (au moins la page d'accueil, endpoint pour récuperer le token, woocommerce token)
+
+Solution : 
 
 ### CORS Policy
 

@@ -127,12 +127,14 @@ add_action('rest_api_init', function () {
         )
     ));
 
+    /**
+     * Test le namespace du Plugin JWT, voir si les routes sont authentifiée par défaut (même en l'absence du Token). La réponse est non, ça ne marche pas et puis si c'était le cas ce serait un hack car rien n'est dit dans la doc la dessus.
+     */
     register_rest_route('jwt-auth/v1', '/test-auth', array(
         'methods' => WP_REST_Server::READABLE,
         'callback' => function (WP_REST_Request $request) {
-            // $user_name = _(wp_get_current_user())->user_nicename;
-            // rest_ensure_response('Welcome ' . $user_name . ', I know you !');
-            rest_ensure_response('hello : )');
+            $user_name = _(wp_get_current_user())->user_nicename;
+            return rest_ensure_response('Welcome ' . $user_name . ', I know you !');
         }
         //Ici on n'a pas mis de permission_callback, donc on ne demande pas explicitement d'authentification. Mais comme on est sur le namespace du plugin JWT tous les endpoints demandent à voir le Token dans le header. S'il n'est pas présent, ou invalide, la requete est rejetée
     ));
