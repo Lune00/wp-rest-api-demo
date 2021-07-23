@@ -310,7 +310,7 @@ Si le Token est invalide, JWT Plugin renvoie une erreur 403 : "Invalid Credentia
 Pour changer la durée de vie du Token, le plugin met à dispo un hook filter `jwt_auth_expire`. Valable 7 jours par défaut. L'expiration est défini par un timestamp. Si le timestamp courant est plus grand que le timestamp définit pour le token alors le token a expiré et n'est plus valide.
 
 
-### Stratégie pour couvrir tous les endpoints
+### Stratégie pour authentifier tous les endpoints
 
 Si le plugin JWT ne voit pas le header Authorization avec le Token alors il laisse passer la requête. Si l'Authorization est présente avec le Token alors il vérifie et valide le token. Si valide, il authentifie l'user et le charge en mémoire dans l'user connecté de wordpress (et on peut faire notre travail).
 
@@ -321,13 +321,16 @@ Questions :
 
 Solutions possibles trouvées pour l'instant :
 
-- ajouter a chaque endpoint une `permission_callback` avec `user_can(wp_get_current_user(), {capability})`. L'authentification est auto demandée
+- ajouter a chaque endpoint une `permission_callback` avec `user_can(wp_get_current_user(), {capability})`. L'authentification est implicitement demandée (semble bien et recommandé)
 
-- mettre les customs endpoints dans le namespace du plugin JWT Token `jwt-auth/v1`?? Tous les endpoints de ce namespace sont protégés par le plugin. Si le Token n'est pas présent ou invalide il rejette la requête pour nous
+- mettre les customs endpoints dans le namespace du plugin JWT Token `jwt-auth/v1`?? Tous les endpoints de ce namespace sont protégés par le plugin. Si le Token n'est pas présent ou invalide il rejette la requête pour nous ? Pas sûr que ce soit une bonne idée (c'est une suggestion lue  par un utilisateur)
 
 
-Il semblerait qu'on ne puisse pas modifier (facilement) les politiques sur les endpoints fournies par wordpress. Il faudrait aller modifier, override les controleurs built-in qui gèrent ces endpoints (pour les posts, pages, custom post types etc...)
+### Authentifier tous les endpoints par défaut (natif wp + nos custom endpoint)
 
+La piste est donnée [ici](https://developer.wordpress.org/rest-api/frequently-asked-questions/#require-authentication-for-all-requests).
+
+Ca marche depuis une origine (projet playground). Mais ça ne marche pas si je requete directement l'API depuis le navigateur.
 
 ### CORS Policy
 
@@ -336,6 +339,8 @@ Comme on développe une API qui n'est pas publique et destinée seulement à êt
 Par défaut **[Wordpress autorise toutes les origines à consommer son API REST](https://developer.wordpress.org/rest-api/frequently-asked-questions/#require-authentication-for-all-requests)**. L'API REST de Wordpress est utilisée par tout son front (ses écrans d'admin) mais la sécurité (éviter les CSRF) est gérée en utilisant une politique de [nonce](https://developer.wordpress.org/plugins/security/nonces/).
 
 Il faut donc venir modifier la CORS Policy de l'API REST pour y mettre une whitelist (et y inclure l'origin du front).
+
+C'est ce qui est fait dans le fichier `functions/cors-policy.php`. On peut la tester facilement avec le projet `playground` pour simuler des origines différentes (en changeant le port)
 
 
 ## Adding REST API Support For Custom Content Types
