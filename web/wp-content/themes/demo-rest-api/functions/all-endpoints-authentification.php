@@ -13,6 +13,13 @@ function authentificate_all_endpoints($result)
         return $result;
     }
 
+    // Preflight requests (OPTIONS) should not require autentication:
+    // https://stackoverflow.com/questions/40722700/add-authentication-to-options-request
+    // https://fetch.spec.whatwg.org/#http-cors-protocol
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        return $result;
+    }
+
     //Check si le endpoint demandé est sur la whitelist. La whitelist est une liste
     //de endpoint ne nécessitant pas l'authentification
     if (is_unauthentificated_endpoint()) {
@@ -53,7 +60,9 @@ function is_unauthentificated_endpoint()
         ),
         WP_REST_Server::READABLE => array(
             '/wp-json',
+            '/wp-json/wp/v2',
             '/wp-json/wp/v2/posts',
+            '/wp-json/myplugin/v1/author/[0-9]+',
             //Si on veut gerer des urls dynamiques ajouter une regex sur la route concernée
             //Ici seulement des caracteres alphanumériques
             '/wp-json/myplugin/v1/sayhello/[a-zA-Z0-9]+'
