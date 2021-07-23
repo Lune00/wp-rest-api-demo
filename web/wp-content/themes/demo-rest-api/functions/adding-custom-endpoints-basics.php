@@ -18,9 +18,9 @@ function my_awesome_func(WP_REST_Request $request)
         'author' => $request['id'],
     ));
 
-    if (empty($posts)) 
-        return new WP_Error('no_author',"Cet auteur n'a pas écrit d'article",  array( 'status' => 404 ));
-    
+    if (empty($posts))
+        return new WP_Error('no_author', "Cet auteur n'a pas écrit d'article",  array('status' => 404));
+
 
     return $posts[0]->post_title . '. Want to buy that article for ' . $request['price'] . ' dollars ?';
 }
@@ -46,9 +46,10 @@ function test_params(WP_REST_Request $request)
         'get_body_params' => $request->get_body_params(),
         'json_params' => $request->get_json_params(),
         'default_params' => $request->get_default_params(),
-        'file_params' => $request->get_file_params()
+        'file_params' => $request->get_file_params(),
+        'current_user' => wp_get_current_user()
     );
-    return $params;
+    return rest_ensure_response($params);
 }
 
 
@@ -73,9 +74,7 @@ add_action('rest_api_init', function () {
         'callback' => 'my_awesome_func',
 
         //Dire explicitement qu'une ressource est publique (specs WP, indiqué sinon dans le header de la réponse x-wp-doingitwrong)
-        'permission_callback' => function(){
-            return true;
-        },
+        'permission_callback' => '__return_true',
 
         'args' => array(
             'id' => array(
@@ -99,15 +98,18 @@ add_action('rest_api_init', function () {
     register_rest_route('myplugin/v1', '/testparams/(?P<id>\d+)', array(
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'test_params',
-        'permission_callback' => function(){
-            return true;
+        //Quand on demande la permission, on demande l'authentification
+        //implicitement. Une façon minimale de demander l'authentification
+        //seulement.
+        'permission_callback' => function () {
+            return user_can(get_current_user(), 'edit_posts');
         }
     ));
 
     register_rest_route('myplugin/v1', '/sayhello/(?P<name>\S+)', array(
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'say_hello',
-        'permission_callback' => function(){
+        'permission_callback' => function () {
             //Seul l'utilisateur avec id 1 peut consommer ce endpoint
             return 1 === get_current_user_id();
         },
@@ -115,13 +117,30 @@ add_action('rest_api_init', function () {
             'name' => array(
                 'sanitize_callback' => function ($value, $request, $param) {
                     // return sanitize_text_field($value);
-                    return str_replace('a', '',$value);
+                    return str_replace('a', '', $value);
                 },
-                'validate_callback' => function($param, $request, $key){
+                'validate_callback' => function ($param, $request, $key) {
                     return strlen($param) <= 5;
                 },
                 'description' => 'Le nom. Doit faire moins de 5 caractères'
             )
         )
     ));
+
+    register_rest_route('jwt-auth/v1', '/test-auth', array(
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => function (WP_REST_Request $request) {
+            // $user_name = _(wp_get_current_user())->user_nicename;
+            // rest_ensure_response('Welcome ' . $user_name . ', I know you !');
+            rest_ensure_response('hello : )');
+        }
+        //Ici on n'a pas mis de permission_callback, donc on ne demande pas explicitement d'authentification. Mais comme on est sur le namespace du plugin JWT tous les endpoints demandent à voir le Token dans le header. S'il n'est pas présent, ou invalide, la requete est rejetée
+    ));
 });
+
+
+function test_auth(WP_REST_Request $request)
+{
+    $user_name = _(wp_get_current_user())->user_nicename;
+    rest_ensure_response('Welcome ' . $user_name . ', I know you !');
+}

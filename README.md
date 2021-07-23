@@ -1,5 +1,15 @@
 # Wordpress : API REST
 
+
+## Monter le projet
+
+- installer et configurer Traefik 
+- A la racine du projet lancer
+
+  `docker-compose up -d`
+- Le projet est accessible sur `wp-rest-api.test`
+- installer les plugins ACF, JWT Authentication for WP-API
+
 ## Contenu de la démo
 
 Dans cette démo, on explore :
@@ -7,6 +17,9 @@ Dans cette démo, on explore :
 - exposition via l'API Rest d'un custom post type `Foobar` avec ses champs ACF
 - ajout de nouvelles routes et endpoint sur un autre namespace
 - validation, sanitization callback pour les arguments envoyés avec la requete
+- mise en place de permissions sur les endpoints customs
+- mise en place de l'authentification sur l'API REST par JWT Token
+- mise en place du pattern Controller
 
 ## Exemples de requêtes
 
@@ -258,7 +271,7 @@ Pour authentifier une requete AJAX envoyée par le Front, il va falloir passer �
 
 >**It is important to keep in mind that this authentication method relies on WordPress cookies. As a result this method is only applicable when the REST API is used inside of WordPress and the current user is logged in**. In addition, the current user must have the appropriate capability to perform the action being performed.
 
-En clair, on ne peut pas utiliser ce système que lorsqu'on est authentifié grâce à un cookie (le cookie sert a authentifier, le nonce **sert uniquement** à verifier que la requête est envoyée depuis un document servi par le serveur, et éviter les attaques CSRF). Utile pour développer du front JS servi par WP, ou des plugins. Mais dans le cas d'un Wordpress utilisé seulement comme une API consommé par un projet *Single Page App* on ne pourra pas s'en servir (car on ne se log pas sur le WP, on ne va jamais visiter son domaine directement).
+En clair, on ne peut pas utiliser ce système que lorsqu'on est authentifié grâce à un cookie (le cookie sert a authentifier, le nonce **sert uniquement** à verifier que la requête est envoyée depuis un document servi par le serveur, et éviter les attaques CSRF. En gros elle enforce l'origin de la requête à être identique à celle du serveur). Utile pour développer du front JS servi par WP, ou des plugins. Mais dans le cas d'un Wordpress utilisé seulement comme une API consommé par un projet *Single Page App* on ne pourra pas s'en servir (car on ne se log pas sur le WP, on ne va jamais visiter son domaine directement).
 
 Solution : pas de solution native pour le moment, utiliser un mode d'authentification implémenté par un plugin. Par exemple le mode *JWT Token*
 
@@ -272,10 +285,57 @@ Le plugin ajoute un nouveau namespace `/jwt-auth/v1` et deux endpoints :
 
 - `/wp-json/jwt-auth/v1/token (POST)` : point d'entrée pour l'authentification. Permet de récupérer son token en échange de ses credentials (passé dans le body de la requete)
 
-Exemple en Curl
+Exemple en Curl (à copier/coller directement dans le terminal, verifier que curl est installé)
+```
+curl -X POST \
+  'http://wp-rest-api.test/wp-json/jwt-auth/v1/token' \
+  -H 'Accept: */*' \
+  -H 'User-Agent: Thunder Client (https://www.thunderclient.io)' \
+  -H 'Content-Type: application/json' \
+  -d '{"username": "username",
+"password": "password"}'
 ```
 
+- `/wp-json/jwt-auth/v1/token/validate (POST)` : endpoint pour valider un token manuellement
 
-```
 
-- `/wp-json/jwt-auth/v1/token/validate (POST)` :
+>The `wp-api-jwt-auth` will intercept every call to the server and will look for the Authorization Header, **if the Authorization header is present will try to decode the token and will set the user according with the data stored in it**. If the token is valid, the API call flow will continue as always.
+
+Utiliser ce token pour toutes les requetes. À mettre dans chaque requete (header Authentification type Bearer Token).
+
+Si le Token est invalide, JWT Plugin renvoie une erreur 403 : "Invalid Credentials" ou "Expired Token"
+
+#### Durée de vie du token
+
+Pour changer la durée de vie du Token, le plugin met à dispo un hook filter `jwt_auth_expire`. Valable 7 jours par défaut. L'expiration est défini par un timestamp. Si le timestamp courant est plus grand que le timestamp définit pour le token alors le token a expiré et n'est plus valide.
+
+
+### Stratégie pour couvrir tous les endpoints
+
+Si le plugin JWT ne voit pas le header Authorization avec le Token alors il laisse passer la requête. Si l'Authorization est présente avec le Token alors il vérifie et valide le token. Si valide, il authentifie l'user et le charge en mémoire dans l'user connecté de wordpress (et on peut faire notre travail).
+
+
+Questions :
+
+- Comment couvrir les endpoints par une necessite authentification ? Dois je le faire manuellement en déclarant une permission (avec la `permission_callback` pour implicitement demander une authentification) sur chaque endpoint?
+
+Solutions possibles trouvées pour l'instant :
+
+- ajouter a chaque endpoint une `permission_callback` avec `user_can(wp_get_current_user(), {capability})`. L'authentification est auto demandée
+
+- mettre les customs endpoints dans le namespace du plugin JWT Token `jwt-auth/v1`?? Tous les endpoints de ce namespace sont protégés par le plugin. Si le Token n'est pas présent ou invalide il rejette la requête pour nous
+
+
+Il semblerait qu'on ne puisse pas modifier (facilement) les politiques sur les endpoints fournies par wordpress. Il faudrait aller modifier, override les controleurs built-in qui gèrent ces endpoints (pour les posts, pages, custom post types etc...)
+
+
+### CORS Policy
+
+Comme on développe une API qui n'est pas publique et destinée seulement à être consommée par le front (origin du projet front), on ferait bien de configurer une CORS policy pour n'autoriser que l'origin du front à requêter l'API depuis le navigateur. Cette couche ajoute de la sécurité dans le navigateur, mais le SOP(Same Origin Policy) et le CORS (Cross Origin Ressource Sharing) **sont des spec implémentées par le navigateur uniquement**. Depuis un serveur ou un simple script il n'y en a pas. C'est fait pour sécuriser le web, dans le navigateur, uniquement. On ne peut pas uniquement compter dessus pour protéger les endpoints.
+
+Par défaut **[Wordpress autorise toutes les origines à consommer son API REST](https://developer.wordpress.org/rest-api/frequently-asked-questions/#require-authentication-for-all-requests)**. L'API REST de Wordpress est utilisée par tout son front (ses écrans d'admin) mais la sécurité (éviter les CSRF) est gérée en utilisant une politique de [nonce](https://developer.wordpress.org/plugins/security/nonces/).
+
+Il faut donc venir modifier la CORS Policy de l'API REST pour y mettre une whitelist (et y inclure l'origin du front).
+
+
+## Adding REST API Support For Custom Content Types
