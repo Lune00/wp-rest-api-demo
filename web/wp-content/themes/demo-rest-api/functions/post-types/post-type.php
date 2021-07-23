@@ -3,7 +3,6 @@ add_action('init', 'cpt_init');
 
 function cpt_init()
 {
-
     /**
      * Register a foobar post type, with REST API support
      *
@@ -40,6 +39,42 @@ function cpt_init()
         'show_in_rest'          => true,
         //url de la ressource dans l'api, par défaut c'est le nom du post-type
         'rest_base' => 'foobar',
+        //Controlleur par défaut de WP, ici rendu explicite
+        'rest_controller_class' => 'WP_REST_Posts_Controller'
+    ));
+
+    //Un autre CPT
+    register_post_type('Book', array(
+        'labels' => array(
+            'name'                => __('Books', 'theme'),
+            'singular_name'       => __('Book', 'theme'),
+            'all_items'           => __('All books', 'theme'),
+            'new_item'            => __('New book', 'theme'),
+            'add_new'             => __('Add new book', 'theme'),
+            'add_new_item'        => __('Add new book', 'theme'),
+            'edit_item'           => __('Edit book', 'theme'),
+            'view_item'           => __('View book', 'theme'),
+            'search_items'        => __('Search', 'theme'),
+            'not_found'           => __('No book', 'theme'),
+            'not_found_in_trash'  => __('No book found in trash', 'theme'),
+            'menu_name'           => __('books', 'theme'),
+        ),
+        'public'                => true,
+        'publicly_queryable'    => true,
+        'query_var'             => false,
+        'hierarchical'          => false,
+        'show_ui'               => true,
+        'show_in_nav_menus'     => true,
+        'supports'              => array('title', 'editor', 'thumbnail', 'excerpt', 'author'),
+        'has_archive'           => true,
+        'rewrite'               => array('slug' => 'book'),
+        'menu_icon'             => 'dashicons-list-view',
+        'menu_position'         => 20,
+        //Spécifique REST
+        //Rendre dispo dans l'api
+        'show_in_rest'          => true,
+        //url de la ressource dans l'api, par défaut c'est le nom du post-type
+        'rest_base' => 'book',
         //Controlleur par défaut de WP, ici rendu explicite
         'rest_controller_class' => 'WP_REST_Posts_Controller'
     ));
@@ -82,5 +117,6 @@ function my_book_taxonomy()
 
     register_taxonomy('genre', array('foobar'), $args);
 }
+
 
 

@@ -31,7 +31,17 @@ Récuperer un custom post-type foobar avec champs ACF et l'auteur (pour prendre 
 
 `{{api-rest-uri}}/foobar?_fields=acf,acf_all,_links&_embed=author`
 
-Récuperer tous les custom post types qui appartiennent au terme 'fantasy' de la custom taxo 'genre'
+Récuperer tous les titres des custom post types qui appartiennent au terme 'fantasy' (ID 4) de la custom taxo 'genre'
+
+`{{api-rest-uri}}/foobar?genre=4&_fields=title`
+
+Récuperer tous les titres des custom post types qui appartiennent au terme 'fantasy' (ID 4) OU au terme 'fiction' (ID 3) de la custom taxo 'genre'
+
+`{{api-rest-uri}}/foobar?genre=4,3&_fields=title`
+
+Récuperer l'id d'un term a partir de son slug
+
+`{{api-rest-uri}}/genre?slug=fantasy&_fields=id`
 
 ## Fonctions, Hooks et Objects Wordpress pour l'API REST
 
@@ -247,6 +257,56 @@ function say_hello(WP_REST_Request $request)
 
 **Ne jamais appeler `wp_die(json_encode($data))` ou `wp_send_json($data)`**.
 
+### Schémas : A utiliser !
+
+>The schema for a resource indicates what fields are present for a particular object.
+
+On peut définnir des schémas pour les arguments des endpoints (au lieu de définir un couple sanitize/validatation sur chaque champ). Ils définissent alors ce que l'API attend comme données en entrée (POST). Est ce que ça dit ce qu'elle renvoie aussi ?
+
+>The WordPress REST API utilizes this system for describing the request and response formats for each endpoint.
+
+>Schema provides machine readable data, so potentially anything that can read JSON can understand what kind of data it is looking at. When we look at the API index by making a GET request to https://ourawesomesite.com/wp-json/, we are returned the schema of our API, enabling others to write client libraries to interpret our data. This process of reading schema data is known as discovery. When we have provided schema for a resource we make that resource discoverable via OPTIONS requests to that route. Exposing resource schema is only one part of our schema puzzle. We also want to use schema for our registered arguments.
+
+>As your codebase and endpoints grow, schema will help keep your code lightweight and maintainable. Without schema you can validate and sanitize, however it will be more difficult to keep track of which functions should be validating what. By adding schema to request arguments we can also expose our argument schema to clients, so validation libraries can be built client side which can help performance by preventing invalid requests from ever being sent to the API.
+
+Les schémas évitent d'avoir à coder bcp de sanitize et validation custom. Si on passe par les schémas JSON, en place d'ête plus concis car Wordpress implemente un validateur de schéma JSON (validation et sanitization) de la spec [JSON Schema](https://json-schema.org/specification-links.html#draft-4), on documente notre API pour les humains et les machines (discovery facilité) et on la rend bcp plus maintenable !
+
+
+## Déclarer un schéma
+
+Ajouter la clé `'schema' => 'callback'`, au moment de l'enregistrement du endpoint. La callback doit retourner un schéma (un array) avec des clés définies par la spec. Exemple de déclaration d'un endpoint avec un schéma
+
+```
+ // Register our routes.
+function prefix_register_my_comment_route() {
+    register_rest_route( 'my-namespace/v1', '/comments', array(
+        // Notice how we are registering multiple endpoints the 'schema' equates to an OPTIONS request.
+        array(
+            'methods'  => 'GET',
+            'callback' => 'prefix_get_comment_sample',
+        ),
+        // Register our schema callback.
+        'schema' => 'prefix_get_comment_schema',
+    ) );
+}
+```
+
+Pour les custom post types, si on utilise le Controller par défaut de Wordpress, comme pour les posts, **alors le schéma est défini par Wordpress (il faudra regarder comment on peut le custommiser. [Ici](https://stackoverflow.com/questions/52709167/wordpress-rest-api-how-to-get-post-schema) peut être des idées)**. On peut voir le schéma si on reqûete la ressource avec la méthode `OPTIONS`
+
+`http://wp-rest-api.test/wp-json/wp/v2/book, method : OPTIONS`
+
+
+
+## Utiliser un schéma : validation et sanitazation
+
+>The REST API defines two main functions for using JSON Schema: `rest_validate_value_from_schema` and `rest_sanitize_value_from_schema`. Both functions accept the request data as the first parameter, the parameter’s schema definition as the second parameter, and optionally the parameter’s name as the third parameter. The validate function returns either true or a WP_Error instance depending on if the data successfully validates against the schema. The sanitize function returns a sanitized form of the data passed to the function, or a WP_Error instance if the data cannot be safely sanitized.
+
+>When calling these functions, **you should take care to always first validate the data using rest_validate_value_from_schema, and then if that function returns true, sanitize the data using rest_sanitize_value_from_schema**. Not using both can open up your endpoint to security vulnerabilities.
+
+On valide, si c'est validé on sanitize (si on sanitize et que c'est pas valide alors on fait du travail en plus pour rien. Mais faire attention à la sanitization car en général en enleve de l'info et on peut rendre la donnée invalide).
+
+
+
 #### Status code
 
 Quelques status codes utiles pour bien comprendre les réponses renvoyées par l'API.Réference [ici](https://restfulapi.net/http-status-codes/)
@@ -392,3 +452,5 @@ add_filter( 'rest_route_for_post', 'my_plugin_rest_route_for_post', 10, 2 );
 ### Registering A Custom Taxonomy With REST API Support
 
 Idem que pour exposer un custom post type. Le controlleur par défaut est `WP_REST_Terms_Controller`
+
+
