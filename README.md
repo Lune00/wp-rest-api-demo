@@ -336,7 +336,11 @@ Comment mettre en place une whitelist ?
 
 L'idée serait de mettre par défaut tous les endpoints en authentification JWT, et d'autoriser quelques endpoints (au moins la page d'accueil, endpoint pour récuperer le token, woocommerce token)
 
-Solution : 
+Solution : je suis allé voir le code source du plugin [API Bearer Auth](https://www.wordpresspluginfinder.com/api-bearer-auth/). J'avais lu qu'il y avait une whitelist d'implémentée. Je l'ai reprise et m'en suis inspirée. Voir la fonction `is_unauthentificated_endpoint()`.
+
+**On a donc tous les endpoints authentifiés par défaut, et on ajoutera chaque url publique dans une whitelist.** Ce check de la whitelist est fait avant le check d'authentification. 
+
+**Un problème : whitelist d'url dynamiques ?** Différentes solutions possibles : soit mettre une regex explicitement sur chaque route de la whitelist, soit match que a partir du début et toutes les urls dynamiques sont autorisées si la base est autorisés. Par exemple, l'url `/wp/v2/posts` dans la whitelist rend publique les urls `/wp/v2/posts` et `wp/v2/posts/1`. Ca me parait ok, sachant que derrière on a aussi les permissions (qui demandent l'authentification).
 
 ### CORS Policy
 

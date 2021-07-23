@@ -15,9 +15,9 @@ function authentificate_all_endpoints($result)
 
     //Check si le endpoint demandé est sur la whitelist. La whitelist est une liste
     //de endpoint ne nécessitant pas l'authentification
-
-    if (is_unauthentificated_endpoint()){
+    if (is_unauthentificated_endpoint()) {
         error_log('this endpoint is public (in a whitelist)');
+        //Si le endpoint est publique, on ne test pas si l'authentification a été faite (token ou non)
         return $result;
     }
 
@@ -52,12 +52,15 @@ function is_unauthentificated_endpoint()
             '/wp-json/jwt-auth/v1/token'
         ),
         WP_REST_Server::READABLE => array(
+            '/wp-json',
             '/wp-json/wp/v2/posts',
-            '/wp-json'
+            //Le mieux serait de mettre des regex sur chaque route de la whitelist directement ?
+            '/wp-json/myplugin/v1/sayhello'
         )
     ));
 
     //On récupere l'url demandée (sans les paramètres de l'url)
+    write_log($_SERVER['REQUEST_URI']);
     $current_url = (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . strtok($_SERVER['REQUEST_URI'], '?');
 
     error_log('endpoint demandé: ' . 'uri: ' . $current_url . ' method: ' .  $_SERVER['REQUEST_METHOD']);
@@ -90,11 +93,19 @@ function is_unauthentificated_endpoint()
     $urls_whitelist = array_merge($custom_urls_whitelist, $default_urls_whitelist);
 
     write_log('La whitelist des urls sur la méthode ' . $_SERVER['REQUEST_METHOD']);
+
+
     write_log($urls_whitelist);
 
     //Si l'url demandée match une url dans la whitelist, on a une url (et un endpoint car on a filtré en amont sur la méthode) non authentifié (publique)
     foreach ($urls_whitelist as $url) {
-        if (preg_match('@^' . $site_url . $url . '$@', $current_url)) {
+
+        //Match toutes les url jusqu'au prochain / (pas possible d'aller à un niveau en dessous)
+        //Pb : demande de renseigner dans la whitelist le slash
+        // if (preg_match("[^" . $site_url . $url . "[^/]*$]", $current_url)) {
+
+        //Par défaut: si on ouvre une url, on ouvre toutes ses urls dynamiquement
+        if (preg_match("[^" . $site_url . $url . "]", $current_url)) {
             return true;
         }
     }
