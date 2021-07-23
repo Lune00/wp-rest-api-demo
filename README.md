@@ -23,6 +23,16 @@ Dans cette démo, on explore :
 
 ## Exemples de requêtes
 
+Récupérer un post type avec seulement certains champs
+
+`{{api-rest-uri}}/posts?_fields=author,id,title,link`
+
+Récuperer un custom post-type foobar avec champs ACF et l'auteur (pour prendre un embed avec _fields il faut inclure les _links)
+
+`{{api-rest-uri}}/foobar?_fields=acf,acf_all,_links&_embed=author`
+
+Récuperer tous les custom post types qui appartiennent au terme 'fantasy' de la custom taxo 'genre'
+
 ## Fonctions, Hooks et Objects Wordpress pour l'API REST
 
 ### Hooks
@@ -98,6 +108,9 @@ On peut aussi faire un usage restrictif de `_embed`. Par exemple
 
 ne va embarquer dans la réponse que l'auteur et pas les autres ressources embedables
 
+### `_envelope`
+
+Passe les paramètres de retour dans le body (incluant header et status code)
 
 ## Extending the REST API
 
@@ -330,6 +343,8 @@ Solutions possibles trouvées pour l'instant :
 
 La piste est donnée [ici](https://developer.wordpress.org/rest-api/frequently-asked-questions/#require-authentication-for-all-requests).
 
+Il faut utiliser le hook `rest_authentication_errors`. C'est notre chance de glisser des erreurs customs et renvoyer une erreur (et tester l'authentification par ex).
+
 Ca marche bien, le problème c'est que ça **bloque tous les endpoints**, y compris le endpoint pour récuperer le token. 
 
 Comment mettre en place une whitelist ?
@@ -354,3 +369,26 @@ C'est ce qui est fait dans le fichier `functions/cors-policy.php`. On peut la te
 
 
 ## Adding REST API Support For Custom Content Types
+
+### Registering A Custom Post Type With REST API Support 
+
+>When registering a custom post type, if you want it to be available via the REST API you should set `'show_in_rest' => true`
+
+>In addition, you can pass an argument for `rest_controller_class`. **This class must be a subclass of `WP_REST_Controller`**. By default, `WP_REST_Posts_Controller` is used as the controller. If you are using a custom controller, then you likely will not be within the wp/v2 namespace.
+
+>If you are using a custom rest_controller_class, then the REST API is unable to automatically determine the route for a given post. In this case, you can use the rest_route_for_post filter to provide this information. This allows for your custom post type to be properly formatted in the Search endpoint and enables automated discovery links.
+
+```
+function my_plugin_rest_route_for_post( $route, $post ) {
+    if ( $post->post_type === 'book' ) {
+        $route = '/wp/v2/books/' . $post->ID;
+    }
+ 
+    return $route;
+}
+add_filter( 'rest_route_for_post', 'my_plugin_rest_route_for_post', 10, 2 );
+```
+
+### Registering A Custom Taxonomy With REST API Support
+
+Idem que pour exposer un custom post type. Le controlleur par défaut est `WP_REST_Terms_Controller`

@@ -1,0 +1,124 @@
+function authentificate_all_endpoints($error)
+{
+    // If a previous authentication check was applied,
+    // pass that result along without modification.
+    // Already an error, so we return it (we know the request will failed)
+    if (true === $error || is_wp_error($error)) {
+        return $error;
+    }
+
+    // Preflight requests (OPTIONS) should not require autentication:
+    // https://stackoverflow.com/questions/40722700/add-authentication-to-options-request
+    // https://fetch.spec.whatwg.org/#http-cors-protocol
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        return $error;
+    }
+
+    //We will check if the endpoint is unauthentificated (see function below)
+    //If it is, then it is public and no need for authentification, we return
+    if (is_unauthentificated_endpoint()) {
+        return $result;
+    }
+
+    // No authentication has been performed yet (your favorite JWT plugin has done the job already
+    // if there is a user logged in base on a Token validation)
+    // Return an error if user is not logged in.
+    if (!is_user_logged_in()) {
+        error_log('unauthentificated request, rejected.');
+        return new WP_Error(
+            'rest_not_logged_in',
+            __('You are not currently logged in. No way'),
+            array('status' => 401)
+        );
+    }
+
+    // Our custom authentication check should have no effect on logged-in requests
+    return $result;
+}
+add_filter('rest_authentication_errors', 'authentificate_all_endpoints');
+
+
+/**
+ * Return true if is endpoint (URI+method) is in the whitelist, false otherwise
+ * Inspired by the plugin api-bearer https://wordpress.org/plugins/api-bearer-auth/#whitelist%20unauthenticated%20urls
+ */
+function is_unauthentificated_endpoint()
+{
+    //Our default whitelist, each key is a method listing public urls
+    define('UNAUTHENTIFICATED_ENDPOINTS_DEFAULT', array(
+        //Endpoint to authentificate is by default public
+        WP_REST_Server::CREATABLE => array(
+            '/wp-json/jwt-auth/v1/token'
+        ),
+        WP_REST_Server::READABLE => array(
+            '/wp-json/myplugin/v1/sayhello/[a-zA-Z0-9]+'
+        )
+    ));
+
+    //Rebuild url asked by the incoming request and get rid of query parameters
+    $current_url = (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . strtok($_SERVER['REQUEST_URI'], '?');
+
+    //just to print along the way (to remove)
+    error_log('endpoint : ' . 'uri: ' . $current_url . ' method: ' .  $_SERVER['REQUEST_METHOD']);
+
+    $site_url = get_site_url();
+
+
+    /**
+     * Hook to allow to add urls elsewhere in the code, or if you want to put that in a plugin, like the
+     * source code I got inspired by
+     * Add URLs that should be avialble to unauthenticated users.
+     * Specify only the part after the site url, e.g. /wp-json/wp/v2/users
+     * Each URL will be prepended by the value of get_site_url()
+     * And each resulting URL will be put in between ^ and $ regular expression signs.
+     */
+    $custom_urls_whitelist = array();
+
+    /**
+     * Collect user urls (filtered by the method passed in argument) by applying the filter hook
+     */
+    $custom_urls_whitelist = apply_filters('jwt_auth_unauthenticated_endpoints_filter', $custom_urls_whitelist, $_SERVER['REQUEST_METHOD']);
+
+    $default_urls_whitelist = array();
+
+    //Retrieve your default whitelist url (based on the method asked by the incoming request)
+    if (!empty(UNAUTHENTIFICATED_ENDPOINTS_DEFAULT[$_SERVER['REQUEST_METHOD']])) {
+        $default_urls_whitelist = UNAUTHENTIFICATED_ENDPOINTS_DEFAULT[$_SERVER['REQUEST_METHOD']];
+    }
+
+    //merge default and user urls
+    $urls_whitelist = array_merge($custom_urls_whitelist, $default_urls_whitelist);
+
+    //Match with a Regex. Here it is a strict match. Maybe there are better patterns. I don't like to use regex but I don't see how to do otherwise. This will not allow dynamic urls to pass the check but we will see below how to manage that
+    foreach ($urls_whitelist as $url) {
+        //Strict match
+        if (preg_match("[^" . $site_url . $url . "$]", $current_url)) {
+            return true;
+        }
+    }
+
+    //Url asked is not in the whitelist, not a public url, we will need authentification for that
+    return false;
+}
+
+/**
+ * Example to use the hook to add custom public endpoints
+ */
+add_filter('jwt_auth_unauthenticated_endpoints_filter', 'add_unauthentificated_endpoints_to_whitelist', 10, 2);
+function add_unauthentificated_endpoints_to_whitelist(array $custom_urls, string $request_method)
+{
+    switch ($request_method) {
+        case WP_REST_Server::CREATABLE:
+            // Will turn /wp-json/myplugin/wp/v2/posts public but not /wp-json/myplugin/wp/v2/posts/1 !
+            $custom_urls[] = '/wp-json/myplugin/wp/v2/posts';
+            break;
+        case WP_REST_Server::READABLE:
+            //Here we use a regex directly to allow dynamic url (handle Path Variable). My endpoint is defined 
+            //with register_rest_route '/sayhello/(?P<name>\S+)'
+            $custom_urls[] = '/wp-json/myplugin/v1/sayhello/[a-zA-Z0-9]+'
+            break;
+    }
+    return $custom_urls;
+}
+
+I think is better to make everything authentificated by default, and then granulary add public url on need with strong constraint. Regex is not easy to handle (at least for me) because it is complex. That's why is better I think to keep the match very strict (like in the plugin I was inspired by) and extend on the fly for each added url in the whitelist. If we explicity put regex expression on some urls, we first can keep them simple and extend our whitelist if really we have a good reason to do so. 

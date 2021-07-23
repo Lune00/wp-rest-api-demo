@@ -20,6 +20,11 @@ function authentificate_all_endpoints($result)
         return $result;
     }
 
+    //Si on est pas en prod on lève l'authentification (juste pour des tests)
+    if(ENVIRONMENT !== 'production'){
+        return $result;
+    }
+
     //Check si le endpoint demandé est sur la whitelist. La whitelist est une liste
     //de endpoint ne nécessitant pas l'authentification
     if (is_unauthentificated_endpoint()) {
@@ -45,6 +50,7 @@ function authentificate_all_endpoints($result)
 }
 add_filter('rest_authentication_errors', 'authentificate_all_endpoints');
 
+
 /**
  * Utilise une whitelist définissant des enpoints ne nécessitant pas l'authentification.
  * Renvoie vrai si le endpoint(URI+method) est dans la whitelist, faux sinon
@@ -62,6 +68,7 @@ function is_unauthentificated_endpoint()
             '/wp-json',
             '/wp-json/wp/v2',
             '/wp-json/wp/v2/posts',
+            '/wp-json/wp/v2/posts/[0-9]+',
             '/wp-json/myplugin/v1/author/[0-9]+',
             //Si on veut gerer des urls dynamiques ajouter une regex sur la route concernée
             //Ici seulement des caracteres alphanumériques
