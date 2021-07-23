@@ -33,20 +33,24 @@ $data = file_get_contents($url);
     <p>Résutlat de la requête <?php echo $url ?> GET depuis le serveur : <?php print_r($data); ?> </p>
 
     <script>
+        const credentials = {
+            username: "paul",
+            password: "paul"
+        }
         if (window.fetch) {
+
             //Reqûetes envoyées depuis le navigateur, soumises à la SOP et CORS
-            fetch('http://wp-rest-api.test/wp-json/myplugin/v1/author/1?&price=50').then((response) => response.json()).then(($data) => console.log($data))
+
+            fetch('http://wp-rest-api.test/wp-json/myplugin/v1/author/1?&price=50').then((response) => response.json()).then(($data) => console.log('GET d\'une route :', $data))
 
             fetch('http://wp-rest-api.test/wp-json/jwt-auth/v1/token', {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Accept": "*/*",
                 },
-                body: {
-                    "username": "paul",
-                    "password": "paul"
-                }
-            }).then((response) => response.json()).then(($data) => console.log($data))
+                body: JSON.stringify(credentials)
+            }).then((response) => response.json()).then(($data) => console.log('Récupération du token : ', $data))
         }
     </script>
 
