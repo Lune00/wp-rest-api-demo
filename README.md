@@ -454,3 +454,9 @@ add_filter( 'rest_route_for_post', 'my_plugin_rest_route_for_post', 10, 2 );
 Idem que pour exposer un custom post type. Le controlleur par défaut est `WP_REST_Terms_Controller`
 
 
+
+## Controleurs
+
+Utiles d'en développer (en implémentant l'interface du controller wp fourni ) si on a besoin d'un CRUD qui n'est pas sur un custom post type (une structure custom ds la DB par exemple)
+
+Les controleurs sur les custom post type sont fournis gratuitement (comme pour les posts), donc on peut en profiter. Il faut juste voir comment faire pour adapter le schéma (avec les champs ACF notamment). On aura a priori

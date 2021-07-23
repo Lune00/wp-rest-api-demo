@@ -102,7 +102,7 @@ add_action('rest_api_init', function () {
         //implicitement. Une façon minimale de demander l'authentification
         //seulement.
         'permission_callback' => function () {
-            return user_can(get_current_user(), 'edit_posts');
+            return user_can(wp_get_current_user(), 'edit_posts');
         }
     ));
 
