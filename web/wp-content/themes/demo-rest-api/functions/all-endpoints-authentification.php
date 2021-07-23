@@ -55,12 +55,14 @@ function is_unauthentificated_endpoint()
             '/wp-json',
             '/wp-json/wp/v2/posts',
             //Si on veut gerer des urls dynamiques ajouter une regex sur la route concernée
-            '/wp-json/myplugin/v1/sayhello'
+            //Ici seulement des caracteres alphanumériques
+            '/wp-json/myplugin/v1/sayhello/[a-zA-Z0-9]+'
         )
     ));
 
     //On récupere l'url demandée (sans les paramètres de l'url)
     write_log($_SERVER['REQUEST_URI']);
+
     $current_url = (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . strtok($_SERVER['REQUEST_URI'], '?');
 
     error_log('endpoint demandé: ' . 'uri: ' . $current_url . ' method: ' .  $_SERVER['REQUEST_METHOD']);
@@ -93,8 +95,6 @@ function is_unauthentificated_endpoint()
     $urls_whitelist = array_merge($custom_urls_whitelist, $default_urls_whitelist);
 
     write_log('La whitelist des urls sur la méthode ' . $_SERVER['REQUEST_METHOD']);
-
-
     write_log($urls_whitelist);
 
     //Si l'url demandée match une url dans la whitelist, on a une url (et un endpoint car on a filtré en amont sur la méthode) non authentifié (publique)
