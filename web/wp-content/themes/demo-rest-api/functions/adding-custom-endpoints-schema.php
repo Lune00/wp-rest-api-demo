@@ -11,16 +11,25 @@ function register_my_other_custom_route()
     register_rest_route(
         'myplugin/v1',
         '/am-i-old/',
+        //On enregistre plusieurs routes pour mettre le schema,
+        //le schema equivaut (implicite) à une route pour la méthode OPTIONS
         array(
-            'methods'  => 'GET',
-            'callback' => 'answer_you',
-            // Register our schema callback.
+            array(
+                'methods'  =>  WP_REST_Server::READABLE,
+                'callback' => 'answer_you',
+                // Register our schema callback.
+            ),
             'schema' => 'am_i_old_schema',
-        ),
+        )
     );
 }
 
 add_action('rest_api_init', 'register_my_other_custom_route');
+
+function answer_you(WP_REST_Request $request)
+{
+    return rest_ensure_response('Hi !');
+}
 
 
 function am_i_old_schema()

@@ -261,7 +261,7 @@ function say_hello(WP_REST_Request $request)
 
 >The schema for a resource indicates what fields are present for a particular object.
 
-On peut définnir des schémas pour les arguments des endpoints (au lieu de définir un couple sanitize/validatation sur chaque champ). Ils définissent alors ce que l'API attend comme données en entrée (POST). Est ce que ça dit ce qu'elle renvoie aussi ?
+On peut définnir des schémas pour les arguments des endpoints (au lieu de définir un couple sanitize/validatation sur chaque champ). Ils définissent alors ce que l'API attend comme données en entrée (POST). Est ce que ça dit ce qu'elle renvoie aussi ? Il me semble que le schéma est validé à la fois en entrée et en sortie
 
 >The WordPress REST API utilizes this system for describing the request and response formats for each endpoint.
 
