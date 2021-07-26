@@ -1,6 +1,5 @@
 # Wordpress : API REST
 
-
 ## Monter le projet
 
 - installer et configurer Traefik 
@@ -19,6 +18,7 @@ Dans cette démo, on explore :
 - validation, sanitization callback pour les arguments envoyés avec la requete
 - mise en place de permissions sur les endpoints customs
 - mise en place de l'authentification sur l'API REST par JWT Token
+- custom endpoint avec validation JSON schéma (réponse retour) et validation arguments (PHP)
 
 ## Exemples de requêtes
 
@@ -272,7 +272,7 @@ On peut définnir des schémas pour les arguments des endpoints (au lieu de déf
 Les schémas évitent d'avoir à coder bcp de sanitize et validation custom. Si on passe par les schémas JSON, en place d'ête plus concis car Wordpress implemente un validateur de schéma JSON (validation et sanitization) de la spec [JSON Schema](https://json-schema.org/specification-links.html#draft-4), on documente notre API pour les humains et les machines (discovery facilité) et on la rend bcp plus maintenable !
 
 
-### Déclarer un schéma
+### Déclarer un schéma de la ressource
 
 Ajouter la clé `'schema' => 'callback'`, au moment de l'enregistrement du endpoint. La callback doit retourner un schéma (un array) avec des clés définies par la spec. Exemple de déclaration d'un endpoint avec un schéma
 
@@ -296,7 +296,7 @@ Pour les custom post types, si on utilise le Controller par défaut de Wordpress
 `http://wp-rest-api.test/wp-json/wp/v2/book, method : OPTIONS`
 
 
-### 2 schémas : un schéma de Discovery, un shéma pour les arguments
+### 2 schémas : un schéma Ressource (sortie/retour), un shéma Arguments(inputs)
 
 Soit on étend un Controller par défaut de Wordpress (par ex pour un custom post type), soit on fait un endpoint complètement custom sans Controller. Le 2eme cas peut se justifier si on a pas besoin d'exposer un CRUD mais juste une fonction. 
 
@@ -371,7 +371,7 @@ function get_schema()
 
 ```
 
-Si on étend un Controller de WP pour faire du CRUD, alors il utilise automatiquement le schéma JSON pour valider/sanitize les arguments du endpoint. On peut ajouter quand même une fonction de sanitization custom comme ic
+Si on étend un Controller de WP pour faire du CRUD, alors il utilise automatiquement le schéma JSON pour valider/sanitize les arguments du endpoint. On peut ajouter quand même une fonction de sanitization custom comme ici avec la clef `arg_options`
 
 ```
 'schema' => array(
@@ -397,7 +397,7 @@ Si on étend un Controller de WP pour faire du CRUD, alors il utilise automatiqu
 ```
 
 
-**A noter que le Schéma de Ressource (pour le retour) n'enforce pas la valeur de retour ! C'est juste de l'information pour le client. Mais si on renvoit une réponse differente il n'y aura pas d'erreur de levée. C'est a nous de nous assurer que la valeur de retour correspond au schéma !** Pour cela on peut valider le schéma dans la callback
+**A noter que le Schéma de Ressource (pour le retour) n'enforce pas la valeur de retour ! C'est juste de l'information pour le client. Mais si on renvoit une réponse differente il n'y aura pas d'erreur de levée. C'est a nous de nous assurer que la valeur de retour correspond au schéma Ressoure !** Pour cela on peut valider le schéma dans la callback
 ```
    $valid_response = rest_validate_value_from_schema($response, $schema, '');
 ```
@@ -499,6 +499,8 @@ function foobar_extend_schema()
 ```
 
 Pour les permissions (est ce qu'un user peut update le post dont il n'est pas l'auteur etc) on hérité des permissions natives de WP en fonction des roles. On peut donc adapter les roles si besoin et leurs capacités. On a pas à gérer ça dans l'extension du schéma.
+
+**Comme ici on bénéficie du Controller de WP, le schéma est utilisé à la fois pour les arguments (entrée) et pour la sortie**. Ca fait sens vu que c'est du CRUD (l'entrée correspond à la sortie)
 
 #### Status code
 
