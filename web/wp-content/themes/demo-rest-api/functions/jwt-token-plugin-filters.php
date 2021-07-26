@@ -5,5 +5,5 @@
  * A augmenter en dev
  */
 add_filter('jwt_auth_expire', function(){
-    return time() + 500;
+    return time() + 60 * 60 * 24;
 });

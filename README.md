@@ -19,7 +19,6 @@ Dans cette démo, on explore :
 - validation, sanitization callback pour les arguments envoyés avec la requete
 - mise en place de permissions sur les endpoints customs
 - mise en place de l'authentification sur l'API REST par JWT Token
-- mise en place du pattern Controller
 
 ## Exemples de requêtes
 
@@ -49,8 +48,9 @@ Récuperer l'id d'un term a partir de son slug
 
 - [`rest_prepare_{$this->post_type}`](https://developer.wordpress.org/reference/hooks/rest_prepare_this-post_type/) : modifie la réponse. Utile pour attacher les champs ACF du post_type
 - [`rest_{$this->post_type}_query`](https://developer.wordpress.org/reference/hooks/rest_this-post_type_query/) : filtre la query construite pour récupérer la ressource. Possibilité de mofifier les args de la WP_QUERY
-
 - [`rest_api_init`](https://developer.wordpress.org/reference/hooks/rest_api_init/) : hook sur lequel enregistrer les routes avec `rest_register_route`. Permet de charger en mémoire que si l'API REST est chargée et utilisée.
+- `register_rest_field` : ajouter un champ sur un objet WP (post, taxo) a exposer via l'API (mettre a jour le schema)
+- `register_rest_route` : ajouter un endpoint custom
 
 ### Fonctions
 

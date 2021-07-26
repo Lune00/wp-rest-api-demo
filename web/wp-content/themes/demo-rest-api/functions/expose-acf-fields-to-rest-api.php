@@ -1,6 +1,10 @@
 <?php
 
 /**
+ * Une facon d'exposer des champs supplémentaires sur un post. Mieux vaut utiliser register_rest_field quand même car on peut modifier directement le schéma
+ */
+
+/**
  * Filters the post data (custom post type here 'foobar') for a REST API response to
  * add ACF field values. 
  * Remonte toutes les métas. S'applique à tous les endpoints (global)

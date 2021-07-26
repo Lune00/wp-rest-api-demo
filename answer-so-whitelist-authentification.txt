@@ -21,10 +21,9 @@ function authentificate_all_endpoints($error)
     }
 
     // No authentication has been performed yet (your favorite JWT plugin has done the job already
-    // if there is a user logged in base on a Token validation)
+    // if there is a user logged in based on a Token validation)
     // Return an error if user is not logged in.
     if (!is_user_logged_in()) {
-        error_log('unauthentificated request, rejected.');
         return new WP_Error(
             'rest_not_logged_in',
             __('You are not currently logged in. No way'),
@@ -50,8 +49,9 @@ function is_unauthentificated_endpoint()
         WP_REST_Server::CREATABLE => array(
             '/wp-json/jwt-auth/v1/token'
         ),
+        //Another example, allow listing your 'foo' custom post type
         WP_REST_Server::READABLE => array(
-            '/wp-json/myplugin/v1/sayhello/[a-zA-Z0-9]+'
+            '/wp-json/wp/v2/foo'
         )
     ));
 
