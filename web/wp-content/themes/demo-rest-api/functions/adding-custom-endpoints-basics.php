@@ -123,7 +123,8 @@ add_action('rest_api_init', function () {
                 'validate_callback' => function ($param, $request, $key) {
                     return strlen($param) <= 5;
                 },
-                'description' => 'Le nom. Doit faire moins de 5 caractères'
+                'description' => 'Le nom. Doit faire moins de 5 caractères',
+                'type' => 'string',
             )
         )
     ));

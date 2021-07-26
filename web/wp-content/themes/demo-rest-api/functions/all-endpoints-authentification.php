@@ -122,6 +122,8 @@ function is_unauthentificated_endpoint()
         }
     }
 
+    write_log('url ' . $current_url . ' demande authentification');
+
     //Cette url n'est pas dans la whitelist, on doit demander l'authentification
     return false;
 }

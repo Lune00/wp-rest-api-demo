@@ -272,7 +272,7 @@ On peut définnir des schémas pour les arguments des endpoints (au lieu de déf
 Les schémas évitent d'avoir à coder bcp de sanitize et validation custom. Si on passe par les schémas JSON, en place d'ête plus concis car Wordpress implemente un validateur de schéma JSON (validation et sanitization) de la spec [JSON Schema](https://json-schema.org/specification-links.html#draft-4), on documente notre API pour les humains et les machines (discovery facilité) et on la rend bcp plus maintenable !
 
 
-## Déclarer un schéma
+### Déclarer un schéma
 
 Ajouter la clé `'schema' => 'callback'`, au moment de l'enregistrement du endpoint. La callback doit retourner un schéma (un array) avec des clés définies par la spec. Exemple de déclaration d'un endpoint avec un schéma
 
@@ -296,8 +296,113 @@ Pour les custom post types, si on utilise le Controller par défaut de Wordpress
 `http://wp-rest-api.test/wp-json/wp/v2/book, method : OPTIONS`
 
 
+### 2 schémas : un schéma de Discovery, un shéma pour les arguments
 
-## Utiliser un schéma : validation et sanitazation
+Soit on étend un Controller par défaut de Wordpress (par ex pour un custom post type), soit on fait un endpoint complètement custom sans Controller. Le 2eme cas peut se justifier si on a pas besoin d'exposer un CRUD mais juste une fonction. 
+
+#### Route custom sans Pattern *Controller*
+
+Le mieux est de :
+- donner une clef `schema` avec un schéma JSON. Il sert a exposer la ressource (méthode OPTIONS sur la route), donner de l'info sur l'API. Le schéma pourra aussi être utilisé pour servir à la validation => **Définit l'output, ce que va récuperer le client**
+- définir le schéma des arguments avec la clef `args`. Définit le schéma des arguments attendus par le endpoint (peut être différent du schéma Discovery) => **Définit l'input, ce que doit envoyer le client**
+
+```
+register_rest_route(
+        'myplugin/v1',
+        '/say-hello/',
+        //On enregistre plusieurs routes pour mettre le schema,
+        //le schema equivaut (implicite) à une route pour la méthode OPTIONS
+        array(
+            array(
+                'methods'  =>  WP_REST_Server::READABLE,
+                'callback' => 'answer_you',
+
+                //Schema pour les arguments (body POST ou url GET)
+                //Si on requete la route avec la méthode OPTIONS
+                //on voit les arguements demandés
+                //Permet au client de savoir ce qu'il doit envoyer (Entrée)
+                'args' => array(
+                    'name' => array(
+                        'sanitize_callback' => function ($value, $request, $param) {          
+                        },
+                        'validate_callback' => function ($param, $request, $key) {
+                        },
+                        'description' => 'Argument Schema',
+                        'required' => true
+                    )
+                )
+            ),
+            //Schema pour Discovery (donne une description de la ressource, visible avec 
+            //requete OPTIONS)
+            //Permet au client de savoir ce qu'il va récupérer (Sortie)
+            'schema' => 'get_schema',
+        )
+    );
+
+
+function get_schema()
+{
+    $schema = array(
+        // This tells the spec of JSON Schema we are using which is draft 4.
+        '$schema'              => 'http://json-schema.org/draft-04/schema#',
+        // The title property marks the identity of the resource.
+        'title'                => 'question',
+        'type'                 => 'object',
+        // In JSON Schema you can specify object properties in the properties attribute.
+        'properties'           => array(
+            'name' => array(
+                'description'  => esc_html__('Votre nom', 'my-textdomain'),
+                'type' => 'string',
+                'required' => true
+            ),
+            'age' => array(
+                'description'  => esc_html__('Votre âge', 'my-textdomain'),
+                'type' => 'integer',
+                'minimum' => 18,
+                'maximum' => 2000,
+                'required' => true
+            )
+        ),
+    );
+
+    return $schema;
+}
+
+
+```
+
+Si on étend un Controller de WP pour faire du CRUD, alors il utilise automatiquement le schéma JSON pour valider/sanitize les arguments du endpoint. On peut ajouter quand même une fonction de sanitization custom comme ic
+
+```
+'schema' => array(
+            'arg_options' => array(
+                'sanitize_callback' => function ($value) {
+                    //On fait une sanitization nous même car JSON Format ne le fait pas
+                    if (isset($value['custom_field_text']))
+                        $value['custom_field_text'] = sanitize_text_field($value['custom_field_text']);
+                    return $value;
+                },
+            ),
+            'description' => __('Champs customs', 'demo'),
+            'type' => 'object',
+            'properties' => array(
+                'custom_field_text' => array(
+                    'type' => 'string',
+                    'required' => true,
+                    'description' => 'Qui êtes vous ?',
+                ),
+            )
+)
+...
+```
+
+
+**A noter que le Schéma de Ressource (pour le retour) n'enforce pas la valeur de retour ! C'est juste de l'information pour le client. Mais si on renvoit une réponse differente il n'y aura pas d'erreur de levée. C'est a nous de nous assurer que la valeur de retour correspond au schéma !** Pour cela on peut valider le schéma dans la callback
+```
+   $valid_response = rest_validate_value_from_schema($response, $schema, '');
+```
+
+### Utiliser un schéma : validation et sanitazation
 
 >The REST API defines two main functions for using JSON Schema: `rest_validate_value_from_schema` and `rest_sanitize_value_from_schema`. Both functions accept the request data as the first parameter, the parameter’s schema definition as the second parameter, and optionally the parameter’s name as the third parameter. The validate function returns either true or a WP_Error instance depending on if the data successfully validates against the schema. The sanitize function returns a sanitized form of the data passed to the function, or a WP_Error instance if the data cannot be safely sanitized.
 
@@ -306,6 +411,94 @@ Pour les custom post types, si on utilise le Controller par défaut de Wordpress
 On valide, si c'est validé on sanitize (si on sanitize et que c'est pas valide alors on fait du travail en plus pour rien. Mais faire attention à la sanitization car en général en enleve de l'info et on peut rendre la donnée invalide).
 
 
+### Etendre le schéma d'un Custom Post Type
+
+On peut aussi étendre le schéma d'un custom post type (pour y inclure les champs ACF par ex). Dans ce cas là on bénéficie de tout le travail fait par le controller par défaut de WP [WP_REST_Posts_Controller](https://developer.wordpress.org/reference/classes/wp_rest_posts_controller/). 
+
+Pour étendre le schéma on utilise la fonction `register_rest_field` sur le hook `rest_api_ini`.
+On peut définir une callback de sanitization et de callback si l'on souhaite. Mais il vaut mieux laisser la validation JSON le faire (à travers le schéma). **Cependant, la validation/sanitization JSON ne fait pas tout à notre place**. Si on veut sanitize un champ texte (retirer les tags par exemple), **le formater JSON ne le fera pas!**. La sanitization du JSON s'applique sur le type de données et des regexs uniquement.
+
+Le schéma va donc faire le gros du boulot : vérifier le type, validation par les enums, la présence du champ (si c'est obligatoire), un format de chaine de caracteres... On ajoutera une sanitization seulement pour sanitize les strings (enlever les balises et caractères spéciaux).
+
+```
+add_action('rest_api_init', 'foobar_extend_schema');
+
+function foobar_extend_schema()
+{
+    //(nom du posttype, nom du champ, options)
+    register_rest_field('foobar', 'my_custom_metas', array(
+        'get_callback' => function ($post_arr) {
+            return array(
+                'custom_field_text' => get_field('custom_field_text', $post_arr['id']),
+                'champ_custom_vraifaux' => get_field('champ_custom_vraifaux', $post_arr['id']),
+            );
+        },
+        'update_callback' => function ($values, $post, $fieldname) {
+            /*
+             * (values, post, fieldname)
+             * values : tableau cle/valeur des champs
+             * post : l'objet post sur lequel on update les metas
+             * fieldname :  le nom du champ enregistré avec register_rest_field
+             */
+            
+            //Select only unchanged values
+            $values_to_update = array_filter($values, function ($val, $field) use ($post) {
+                $current_value = get_field($field, $post->ID, false);
+                return $current_value !== $val;
+            }, ARRAY_FILTER_USE_BOTH);
+
+            $updates = array();
+
+            foreach ($values_to_update as $field_name => $value) {
+                $updates[$field_name] = update_field($field_name, $value, $post->ID);
+            }
+
+            $errors = array_filter($updates, fn ($update) => false === $update);
+
+            if (empty($errors))
+                return true;
+
+            $fields_not_updated = implode(', ', array_keys($errors));
+
+            return new WP_Error(
+                'rest_foobar_incomplete_update',
+                __("Failed to update the following fields: {$fields_not_updated}"),
+                array('status' => 500)
+            );
+        },
+
+        'schema' => array(
+            'arg_options' => array(
+                'sanitize_callback' => function ($value) {
+                  //Si on veut faire de la sanitization personalisée
+                    $value['custom_field_text'] = sanitize_text_field($value['custom_field_text']);
+                    return $value;
+                },
+            ),
+            'description' => __('Champs customs', 'demo'),
+            'type' => 'object',
+            'properties' => array(
+                'custom_field_text' => array(
+                    'type' => 'string',
+                    'required' => true,
+                    'description' => 'Qui êtes vous ?',
+                ),
+                'champ_custom_vraifaux' => array(
+                    'type' => 'string',
+                    //Valider parmi un enum de valeurs
+                    'enum' => array(
+                        'red',
+                        'blue'
+                    ),
+                    'required' => true
+                ),
+            )
+        )
+    ));
+}
+```
+
+Pour les permissions (est ce qu'un user peut update le post dont il n'est pas l'auteur etc) on hérité des permissions natives de WP en fonction des roles. On peut donc adapter les roles si besoin et leurs capacités. On a pas à gérer ça dans l'extension du schéma.
 
 #### Status code
 
@@ -407,9 +600,7 @@ Il faut utiliser le hook `rest_authentication_errors`. C'est notre chance de gli
 
 Ca marche bien, le problème c'est que ça **bloque tous les endpoints**, y compris le endpoint pour récuperer le token. 
 
-Comment mettre en place une whitelist ?
-
-L'idée serait de mettre par défaut tous les endpoints en authentification JWT, et d'autoriser quelques endpoints (au moins la page d'accueil, endpoint pour récuperer le token, woocommerce token)
+L'idée serait de mettre par défaut tous les endpoints en authentification JWT, et d'autoriser une whitelist de quelques endpoints (au moins la page d'accueil, endpoint pour récuperer le token, woocommerce token)
 
 Solution : je suis allé voir le code source du plugin [API Bearer Auth](https://www.wordpresspluginfinder.com/api-bearer-auth/). J'avais lu qu'il y avait une whitelist d'implémentée. Je l'ai reprise et m'en suis inspirée. Voir la fonction `is_unauthentificated_endpoint()`.
 
@@ -455,8 +646,15 @@ Idem que pour exposer un custom post type. Le controlleur par défaut est `WP_RE
 
 
 
-## Controleurs
+## Controleurs customs
 
 Utiles d'en développer (en implémentant l'interface du controller wp fourni ) si on a besoin d'un CRUD qui n'est pas sur un custom post type (une structure custom ds la DB par exemple)
 
-Les controleurs sur les custom post type sont fournis gratuitement (comme pour les posts), donc on peut en profiter. Il faut juste voir comment faire pour adapter le schéma (avec les champs ACF notamment). On aura a priori
+Les controleurs sur les custom post type sont fournis gratuitement (comme pour les posts), donc on peut en profiter. Il faut juste voir comment faire pour adapter le schéma (avec les champs ACF notamment).
+
+
+## Integration avec ACF
+
+On va creer programmatiquement des champs ACF.
+On les mappera dans les fonctions `get_callback` et `update_callback` quand on enregistrera des fields customs en plus sur les custom post types. On écrira une fonction qui liste les champs ACF utilisés
+On crée un form gravity form dans un json

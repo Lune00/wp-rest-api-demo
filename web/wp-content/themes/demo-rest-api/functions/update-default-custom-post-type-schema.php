@@ -12,20 +12,35 @@
 
 add_action('rest_api_init', 'foobar_extend_schema');
 
-
-
+// Reflexions sur le mapping entre le schéma et les champs ACF (besoin de valider pour eviter des bugs)
 
 // 1) Déclarer les champs ACF que l'on veut ajouter au schéma
-define('METAS', array(
-    'custom_field_text',
-    'champ_custom_vraifaux'
+// 2) Ecrire une fonction qui leve une Exception si un champ de METAS n'existe pas ds ACF
+// 3) Si ok, register_rest_field sur tous les noms.
+//Ou sinon définir un schéma, et valider le schéma (les noms des champs)
+
+
+define('ACF_FIELDS', array(
+    'custom_field_text'
 ));
 
-// 2) Ecrire une fonction qui leve une Exception si un champ de METAS n'existe pas ds ACF
+function get_existing_field(string $field, WP_Post $post)
+{
 
-// 3) Si ok, register_rest_field sur tous les noms.
+    if (!defined('ACF_FIELDS'))
+        throw new Exception('ACF_FIELDS \existe pas');
 
-//Ou sinon définir un schéma, et valider le schéma (les noms des champs)
+    if (!function_exists('get_field'))
+        throw new Exception('ACF n\est pas installé');
+
+    if (!isset(ACF_FIELDS[$field]))
+        throw new Exception('Le champ ACF ' . $field . 'n\existe pas');
+
+    return get_field($field, $post->ID, false);
+}
+
+
+
 
 function foobar_extend_schema()
 {
@@ -43,14 +58,14 @@ function foobar_extend_schema()
              * post : l'objet post sur lequel on update les metas
              * fieldname :  le nom du champ enregistré avec register_rest_field
              */
-            $successfull_updates = array();
+            $updates = array();
 
             //Select only unchanged values
-            $values_to_update = array_filter($values, function($val, $field) use($post){
+            $values_to_update = array_filter($values, function ($val, $field) use ($post) {
                 $current_value = get_field($field, $post->ID, false);
                 write_log('field: ' . $field . ' value(post): ' . $val . ' current : ' . $current_value);
                 return $current_value !== $val;
-            },ARRAY_FILTER_USE_BOTH);
+            }, ARRAY_FILTER_USE_BOTH);
 
             foreach ($values_to_update as $field_name => $value) {
                 //Définir une action custom sur chaque nom de champ
@@ -62,10 +77,10 @@ function foobar_extend_schema()
                 //     $updates[$field_name]=false;
                 //     continue;
                 // }
-                $successfull_updates[$field_name] = update_field($field_name, $value, $post->ID);
+                $updates[$field_name] = update_field($field_name, $value, $post->ID);
             }
 
-            $errors = array_filter($successfull_updates, fn ($update) => false === $update);
+            $errors = array_filter($updates, fn ($update) => false === $update);
 
             if (empty($errors))
                 return true;
@@ -78,16 +93,24 @@ function foobar_extend_schema()
                 array('status' => 500)
             );
         },
-        //J'enregistre tous mes champs ACFS ici (sous un objet)
 
+        //J'enregistre tous mes champs ACFS ici (sous un objet)
         'schema' => array(
+            'arg_options' => array(
+                'sanitize_callback' => function ($value) {
+                    //On fait une sanitization nous même car JSON Format ne le fait pas
+                    if (isset($value['custom_field_text']))
+                        $value['custom_field_text'] = sanitize_text_field($value['custom_field_text']);
+                    return $value;
+                },
+            ),
             'description' => __('Champs customs', 'demo'),
             'type' => 'object',
             'properties' => array(
                 'custom_field_text' => array(
                     'type' => 'string',
                     'required' => true,
-                    'description' => 'Qui êtes vous ?'
+                    'description' => 'Qui êtes vous ?',
                 ),
                 'champ_custom_vraifaux' => array(
                     'type' => 'string',
@@ -97,7 +120,12 @@ function foobar_extend_schema()
                         'blue'
                     ),
                     'required' => true
-                )
+                ),
+                // 'un_nombre' => array(
+                //     'type' => 'number',
+                //     'multipleOf' => 2,
+                //     'required' => true
+                // )
             )
         )
     ));
