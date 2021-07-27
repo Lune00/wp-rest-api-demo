@@ -1,0 +1,10 @@
+[
+    {
+    "type": "text",
+    "id": "100",
+    "label": "Foobar",
+    "inputName" : "foobar",
+    "defaultValue" : "une valeur par défaut",
+    "prepopulate_field_setting" : true
+    }
+]
