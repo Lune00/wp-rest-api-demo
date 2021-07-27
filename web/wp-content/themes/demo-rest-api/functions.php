@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Helper debug
+ */
 if (!function_exists('write_log')) {
 
     function write_log($log) {
@@ -14,6 +17,13 @@ if (!function_exists('write_log')) {
 
 }
 
+function dump($data)
+{
+    echo '<pre>';
+    var_dump($data);
+    echo '</pre>';
+    die;
+}
 
 foreach (glob(dirname(__FILE__) . "/functions/post-types/*.php") as $filename) {
     require_once $filename;

@@ -1,10 +1,9 @@
 [
     {
     "type": "text",
-    "id": "100",
-    "label": "Foobar",
-    "inputName" : "foobar",
-    "defaultValue" : "une valeur par défaut",
+    "label": "Enceinte connectée",
+    "inputName" : "enceinte_connectee",
+    "defaultValue" : "",
     "prepopulate_field_setting" : true
     }
 ]
