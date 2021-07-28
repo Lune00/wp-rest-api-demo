@@ -51,30 +51,32 @@ function value_by_field_input_name(array $entry, array $form, $input_name, strin
 }
 
 
-add_action('gform_after_submission', 'set_post_content', 10, 2);
-function set_post_content($entry, $form)
-{
+// add_action('gform_after_submission', 'set_post_content', 10, 2);
+// function set_post_content($entry, $form)
+// {
 
-    //On récupere l'id du logement dans le formulaire
-    $id_logement = 36;
+//     // write_log('une nouvelle soumission !');
 
-    //Premiere création
-    $id_declaration = null;
+//     // //On récupere l'id du logement dans le formulaire
+//     // $id_logement = 36;
 
-    if (!isset($id_declaration)) {
+//     // //Premiere création
+//     // $id_declaration = null;
 
-        //On attache l'entry a l'hebergement
-        update_post_meta($id_logement, 'entry', $entry['id']);
-        //On attache la ref du logement à l'entrée
-        gform_add_meta($entry['id'], 'logement', $id_logement, $form['id']);
-    } else {
+//     // if (!isset($id_declaration)) {
 
-        //Todo
-        dump('Mettre à jour la déclaration liée au logement');
-    }
+//     //     //On attache l'entry a l'hebergement
+//     //     update_post_meta($id_logement, 'entry', $entry['id']);
+//     //     //On attache la ref du logement à l'entrée
+//     //     gform_add_meta($entry['id'], 'logement', $id_logement, $form['id']);
+//     // } else {
 
-    dump($entry);
-}
+//     //     //Todo
+//     //     dump('Mettre à jour la déclaration liée au logement');
+//     // }
+
+//     // dump($entry);
+// }
 
 
 /**
@@ -137,29 +139,35 @@ function display_metas_on_logement($post)
 /**
  * Hook pour ajouter une metabox sur une entrée
  */
-add_filter( 'gform_entry_detail_meta_boxes', 'register_ur_meta_box', 10, 3 );
-function register_ur_meta_box($metabox, $entry, $form){
-    if ( ! isset( $meta_boxes['logement'] ) ) {
+add_filter('gform_entry_detail_meta_boxes', 'register_ur_meta_box', 10, 3);
+function register_ur_meta_box($metabox, $entry, $form)
+{
+    if (!isset($meta_boxes['logement'])) {
         $meta_boxes['logement'] = array(
-            'title'         => esc_html__( 'Logement Details', 'gravityforms' ),
+            'title'         => esc_html__('Logement Details', 'gravityforms'),
             'callback'      => 'display_link_to_logement',
             'context'       => 'side',
-            'callback_args' => array( $entry, $form ),
+            'callback_args' => array($entry, $form),
         );
     }
- 
+
     return $meta_boxes;
 }
 
 /**
  * Afficher les métas sur une entrée (lien vers logement etc...)
  */
-function display_link_to_logement($args){
+function display_link_to_logement($args)
+{
     $form  = $args['form'];
     $entry = $args['entry'];
-    $logement_id = gform_get_meta($entry['id'],'logement');
+    $logement_id = gform_get_meta($entry['id'], 'logement');
+    if (empty($logement_id)) {
+        echo 'ce n est pas une entrée pour un logement, pas de metabox';
+        return;
+    }
     $logement = get_post($logement_id);
     $permalink = get_edit_post_link($logement_id);
-    $html   = '<p>Logement : ' . $logement->post_title .' <a href="' . $permalink .'">Voir le logement</a> <p>';
+    $html   = '<p>Logement : ' . $logement->post_title . ' <a href="' . $permalink . '">Voir le logement</a> <p>';
     echo $html;
 }

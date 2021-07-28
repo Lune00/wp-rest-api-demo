@@ -20,6 +20,9 @@ function build_gf_form_meta(string $title, string $ressource)
     //On map le JSON a un array
     $fields = json_decode($json_fields, true);
 
+    if (!class_exists('GF_Fields'))
+        return false;
+
     foreach ($fields as $field) {
         $form['fields'][] = GF_Fields::create($field);
     }
@@ -39,12 +42,16 @@ function get_form_by_name(string $title)
 
 function create_form($form)
 {
+
+    if (!class_exists('GFAPI'))
+        return false;
+
     $existing_form = get_form_by_name($form['title']);
 
     if (!isset($existing_form))
         return GFAPI::add_form($form);
 
-    return false; 
+    return false;
 }
 
 $form = build_gf_form_meta('Test 2', 'myform.json');

@@ -303,8 +303,8 @@ Soit on étend un Controller par défaut de Wordpress (par ex pour un custom pos
 #### Route custom sans Pattern *Controller*
 
 Le mieux est de :
-- donner une clef `schema` avec un schéma JSON. Il sert a exposer la ressource (méthode OPTIONS sur la route), donner de l'info sur l'API. Le schéma pourra aussi être utilisé pour servir à la validation => **Définit l'output, ce que va récuperer le client**
-- définir le schéma des arguments avec la clef `args`. Définit le schéma des arguments attendus par le endpoint (peut être différent du schéma Discovery) => **Définit l'input, ce que doit envoyer le client**
+- donner une clef `schema` avec un schéma JSON. Il sert a exposer la ressource (méthode OPTIONS, clé `schema` sur la route), donner de l'info sur l'API. Le schéma pourra aussi être utilisé pour servir à la validation => **Définit l'output, ce que va récuperer le client**
+- définir le schéma des arguments avec la clef `args`. Définit le schéma des arguments attendus par le endpoint (peut être différent du schéma Discovery) => **Définit l'input, ce que doit envoyer le client** (méthode GET sur la route, clé `args`)
 
 ```
 register_rest_route(
@@ -655,8 +655,31 @@ Utiles d'en développer (en implémentant l'interface du controller wp fourni ) 
 Les controleurs sur les custom post type sont fournis gratuitement (comme pour les posts), donc on peut en profiter. Il faut juste voir comment faire pour adapter le schéma (avec les champs ACF notamment).
 
 
-## Integration avec ACF
+## Gravity Forms
 
-On va creer programmatiquement des champs ACF.
-On les mappera dans les fonctions `get_callback` et `update_callback` quand on enregistrera des fields customs en plus sur les custom post types. On écrira une fonction qui liste les champs ACF utilisés
-On crée un form gravity form dans un json
+### Authentification 
+
+Le schéma `{domain}/wp-json/gf/v2` est publique. On peut override l'authentification sur les endpoints de GF avec le hook `gform_webapi_authentication_required_`.
+
+**On utilise directement l'authentification de WP par JWT Token** (sinon il faut mettre en place OAuth si on veut faire mieux ce qui implique un 3eme serveur etc, pas le temps sur ce projet d'explorer cela).
+
+Les endpoints de GF sont automatiquement authentifiées (même si on les met dans la whitelist avec authentification demandée on ne peut pas y acceder).
+
+**Après des tests, on dirait que la policy d'authentification de GF s'applique après celle définie ds notre fonction hook sur `rest_authentication_errors`**, si bien que si on déclare comme rejetée la réponse et qu'on retourne une erreur, on recupere quand meme la réponse du plugin de GF.
+
+On va **bien définir les capabilities gravity forms du role des user** pour controler ce qu'ils peuvent faire.
+
+**Les soumissions de formulaires via POST gf/v2/forms/{id}/submissions sont toutes publiques par défaut**.
+
+
+### Post un form
+
+- recuperer le form via `GET gf/v2/forms/{id du form}`. On recupere toutes les infos et notamment les champs sous la clef `fields`, avec leur id.
+- le client remplit le form, et le soumet via  `POST gf/v2/forms/{id du form}/submissions`. La validation/sanitization de GF est faite et renvoie soit les erreurs de validation `code 400`, soit l'entrée crée (et son id) `code 200`.
+
+Information intéressante : **le hook `gform_after_submission` est bien fired après une soumission via l'API**
+
+Problèmes trouvés : 
+- le endpoint `POST gf/v2/forms/{id du form}/submissions` **ne sanitize pas (strip tags)**, **ne valide que partiellement (par exemple les valeurs admises d'un select, si type nombre demandé et texte recu laisse vide l'entrée mais ne renvoie pas le message d'erreur etc...)**
+- pas de nonce sur le form (possible CSRF attack)
+- on peut forcer l'authentification sur tous les POSTS de forms ou sur aucun (par défaut publique). Pas trouvé de moyen simple de faire une whitelist de post. Pas réussi non plus à faire marcher le hook `gform_webapi_authentication_required_` pour forcer l'authentification.

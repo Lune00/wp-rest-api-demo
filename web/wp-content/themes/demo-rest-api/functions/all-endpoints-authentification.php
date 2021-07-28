@@ -72,7 +72,8 @@ function is_unauthentificated_endpoint()
             '/wp-json/myplugin/v1/author/[0-9]+',
             //Si on veut gerer des urls dynamiques ajouter une regex sur la route concernée
             //Ici seulement des caracteres alphanumériques
-            '/wp-json/myplugin/v1/sayhello/[a-zA-Z0-9]+'
+            '/wp-json/myplugin/v1/sayhello/[a-zA-Z0-9]+',
+            '/wp-json/gf/v2/entries/[0-9]+'
         )
     ));
 
@@ -157,3 +158,16 @@ function my_site_rest_index($response)
     return $response;
 }
 add_filter('rest_index', 'my_site_rest_index');
+
+
+
+//Possibilité d'override l'authentification des endpoints de Gravity Forms
+// add_filter( 'gform_webapi_authentication_required_' . $endpoint, 'your_function_name' );
+
+/**
+ * Exemple : authentification sur tous les posts de form
+ */
+add_filter( 'gform_webapi_authentication_required_post_forms_submissions', function($data){
+    write_log('GF authentification sur le post d un form');
+    return true;
+}, 10, 1 );
