@@ -12,8 +12,6 @@
         },
         "field": {
             "type": "number",
-            "label": "Enceinte connectée",
-            "inputName": "enceinte_connectee",
             "defaultValue": "",
             "prepopulate_field_setting": true,
             "rangeMin" : 0
@@ -32,8 +30,6 @@
         },
         "field": {
             "type": "number",
-            "label": "Bouilloire Électrique",
-            "inputName": "bouilloire_electrique",
             "defaultValue": "",
             "prepopulate_field_setting": true,
             "rangeMin" : 0

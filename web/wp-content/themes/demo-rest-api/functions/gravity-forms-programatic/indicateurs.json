@@ -1,0 +1,17 @@
+[
+    {
+        "id":"changement_climatique",
+        "label": "Changement Climatique",
+        "unit" : "kg-eq-co2"
+    },
+    {
+        "id":"ressources_fossiles",
+        "label": "Utilisation des ressources fossiles",
+        "unit": "MJ"
+    },
+    {
+        "id":"ressources_minerales",
+        "label": "Utilisation des ressources minérales" ,
+        "unit":"kg-eq-sb"
+    }
+]

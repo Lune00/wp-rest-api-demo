@@ -40,11 +40,10 @@ function build_gf_form_meta(string $title, string $ressource)
     //On fabrique des champs GF à partir des champs renseignés dans le JSON
     foreach ($entities as $entity) {
 
-        $GF_field = array(
+        $GF_field = array_merge(array(
             'inputName' => $entity['id'],
             'label' => $entity['label'],
-            ...$entity['field']
-        );
+        ), $entity['field']);
 
         $form['fields'][] = GF_Fields::create($GF_field);
     }
