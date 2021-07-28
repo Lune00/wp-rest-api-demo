@@ -2,6 +2,7 @@
     {
         "id": "enceinte_connectee",
         "label": "Enceinte connectée",
+        "isUsed" : true,
         "weight": {
             "lifetime": 5,
             "indicatorValues": {

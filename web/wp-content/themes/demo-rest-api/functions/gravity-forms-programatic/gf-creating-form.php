@@ -40,6 +40,10 @@ function build_gf_form_meta(string $title, string $ressource)
     //On fabrique des champs GF à partir des champs renseignés dans le JSON
     foreach ($entities as $entity) {
 
+        //On ne prend pas ce qui n'est pas utilisé dans le calcul
+        if (!$entity['isUsed'])
+            continue;
+
         $GF_field = array_merge(array(
             'inputName' => $entity['id'],
             'label' => $entity['label'],
@@ -73,7 +77,7 @@ function get_form_by_name(string $title)
     return null;
 }
 
-
+//Todo : mettre en place une mécanique d'update si le form a changé
 function create_form($form)
 {
     if (!class_exists('GFAPI'))

@@ -56,7 +56,7 @@ class ElectricalEquipment implements IEquipment
         $indcatorValue = $this->getIndicatorValueById($indicator);
 
         if (!isset($indcatorValue))
-            throw new Exception('Indicateur Inconnu demandé pour l equipement ' . $this->label);
+            throw new Exception('Indicateur Inconnu demandé pour equipement ' . $this->label);
 
         return $nb * $indcatorValue->value();
     }
