@@ -19,6 +19,9 @@ Dans cette démo, on explore :
 - mise en place de permissions sur les endpoints customs
 - mise en place de l'authentification sur l'API REST par JWT Token
 - custom endpoint avec validation JSON schéma (réponse retour) et validation arguments (PHP)
+- l'api de Gravity Forms
+- des solutions pour contourner les limites rencontrées de l'API de GF
+- la génération de formulaire à partir d'une structure json statique
 
 ## Exemples de requêtes
 
@@ -539,7 +542,7 @@ Pour authentifier une requete AJAX envoyée par le Front, il va falloir passer �
 
 >**It is important to keep in mind that this authentication method relies on WordPress cookies. As a result this method is only applicable when the REST API is used inside of WordPress and the current user is logged in**. In addition, the current user must have the appropriate capability to perform the action being performed.
 
-En clair, on ne peut pas utiliser ce système que lorsqu'on est authentifié grâce à un cookie (le cookie sert a authentifier, le nonce **sert uniquement** à verifier que la requête est envoyée depuis un document servi par le serveur, et éviter les attaques CSRF. En gros elle enforce l'origin de la requête à être identique à celle du serveur). Utile pour développer du front JS servi par WP, ou des plugins. Mais dans le cas d'un Wordpress utilisé seulement comme une API consommé par un projet *Single Page App* on ne pourra pas s'en servir (car on ne se log pas sur le WP, on ne va jamais visiter son domaine directement).
+En clair, on ne peut pas utiliser ce système que lorsqu'on est authentifié grâce à un cookie (le cookie sert a authentifier, le nonce **sert uniquement** à verifier que la requête est envoyée depuis un document servi par le serveur, et éviter les attaques CSRF). Utile pour développer du front JS servi par WP, ou des plugins. Mais dans le cas d'un Wordpress utilisé seulement comme une API consommé par un projet *Single Page App* on ne pourra pas s'en servir (car on ne se log pas sur le WP, on ne va jamais visiter son domaine directement).
 
 Solution : pas de solution native pour le moment, utiliser un mode d'authentification implémenté par un plugin. Par exemple le mode *JWT Token*
 
@@ -590,8 +593,7 @@ Questions :
 Solutions possibles trouvées pour l'instant :
 
 - ajouter a chaque endpoint une `permission_callback` avec `user_can(wp_get_current_user(), {capability})`. L'authentification est implicitement demandée. **Semble bien et recommandé**
-
-- mettre les customs endpoints dans le namespace du plugin JWT Token `jwt-auth/v1`?? Tous les endpoints de ce namespace sont protégés par le plugin. Si le Token n'est pas présent ou invalide il rejette la requête pour nous ? Pas sûr que ce soit une bonne idée (c'est une suggestion lue  par un utilisateur). **J'ai testé, ça marche pas. C'est comme les autres routes, si pas de Token présent dans la requête, pas de vérification**
+- implémenter une whitelist (comme dans certains plugins JWT)
 
 
 ### Authentifier tous les endpoints par défaut (natif wp + nos custom endpoint)
@@ -646,8 +648,6 @@ add_filter( 'rest_route_for_post', 'my_plugin_rest_route_for_post', 10, 2 );
 
 Idem que pour exposer un custom post type. Le controlleur par défaut est `WP_REST_Terms_Controller`
 
-
-
 ## Controleurs customs
 
 Utiles d'en développer (en implémentant l'interface du controller wp fourni ) si on a besoin d'un CRUD qui n'est pas sur un custom post type (une structure custom ds la DB par exemple)
@@ -660,6 +660,10 @@ Les controleurs sur les custom post type sont fournis gratuitement (comme pour l
 ### Authentification 
 
 Le schéma `{domain}/wp-json/gf/v2` est publique. On peut override l'authentification sur les endpoints de GF avec le hook `gform_webapi_authentication_required_`.
+
+L'idéal est de mettre en place une authorisation 0Auth1.0. Il faut créer un user dédié sur WP a soumettre des forms avec des capabilities minimum nécessaires. Les credentials (basic auth ou Oauth) sont générés pour cet user et c'est lui qui sera *utilisé* (**en appliquant les permissions qu'il a**) pour executer les actions.
+
+### Notre solution
 
 **On utilise directement l'authentification de WP par JWT Token** (sinon il faut mettre en place OAuth si on veut faire mieux ce qui implique un 3eme serveur etc, pas le temps sur ce projet d'explorer cela).
 
@@ -680,6 +684,12 @@ On va **bien définir les capabilities gravity forms du role des user** pour con
 Information intéressante : **le hook `gform_after_submission` est bien fired après une soumission via l'API**
 
 Problèmes trouvés : 
-- le endpoint `POST gf/v2/forms/{id du form}/submissions` **ne sanitize pas (strip tags)**, **ne valide que partiellement (par exemple les valeurs admises d'un select, si type nombre demandé et texte recu laisse vide l'entrée mais ne renvoie pas le message d'erreur etc...)**
+- le endpoint `POST gf/v2/forms/{id du form}/submissions` **ne sanitize pas (strip tags)**, **ne valide que partiellement (par exemple les valeurs admises d'un select, si type nombre demandé et texte recu laisse vide l'entrée mais ne renvoie pas le message d'erreur etc...)**. En fait, ce n'est pas un probleme de l'API mais de la derniere version de GF, c'est la fonction dessous `GFAPI::submit_form` qui produit le même problème.
 - pas de nonce sur le form (possible CSRF attack)
 - on peut forcer l'authentification sur tous les POSTS de forms ou sur aucun (par défaut publique). Pas trouvé de moyen simple de faire une whitelist de post. Pas réussi non plus à faire marcher le hook `gform_webapi_authentication_required_` pour forcer l'authentification.
+- pas de logique métier autour de la soumission, peut être via les hooks ?
+
+
+## Solution pour GF 
+
+On va masquer les soumissions de forms par des endpoints customs, car des pb avec l'API de GF, notamment d'authentification.

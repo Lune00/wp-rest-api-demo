@@ -55,27 +55,27 @@ function value_by_field_input_name(array $entry, array $form, $input_name, strin
 // function set_post_content($entry, $form)
 // {
 
-//     // write_log('une nouvelle soumission !');
+//     write_log('une nouvelle soumission !');
 
-//     // //On récupere l'id du logement dans le formulaire
-//     // $id_logement = 36;
+//     //On récupere l'id du logement dans le formulaire
+//     $id_logement = 36;
 
-//     // //Premiere création
-//     // $id_declaration = null;
+//     //Premiere création
+//     $id_declaration = null;
 
-//     // if (!isset($id_declaration)) {
+//     if (!isset($id_declaration)) {
 
-//     //     //On attache l'entry a l'hebergement
-//     //     update_post_meta($id_logement, 'entry', $entry['id']);
-//     //     //On attache la ref du logement à l'entrée
-//     //     gform_add_meta($entry['id'], 'logement', $id_logement, $form['id']);
-//     // } else {
+//         //On attache l'entry a l'hebergement
+//         update_post_meta($id_logement, 'entry', $entry['id']);
+//         //On attache la ref du logement à l'entrée
+//         gform_add_meta($entry['id'], 'logement', $id_logement, $form['id']);
+//     } else {
 
-//     //     //Todo
-//     //     dump('Mettre à jour la déclaration liée au logement');
-//     // }
+//         //Todo
+//         dump('Mettre à jour la déclaration liée au logement');
+//     }
 
-//     // dump($entry);
+//     dump($entry);
 // }
 
 
@@ -163,7 +163,7 @@ function display_link_to_logement($args)
     $entry = $args['entry'];
     $logement_id = gform_get_meta($entry['id'], 'logement');
     if (empty($logement_id)) {
-        echo 'ce n est pas une entrée pour un logement, pas de metabox';
+        echo 'ce n est pas une entrée pour un logement, il ne devrait pas y avoir de metabox ici';
         return;
     }
     $logement = get_post($logement_id);

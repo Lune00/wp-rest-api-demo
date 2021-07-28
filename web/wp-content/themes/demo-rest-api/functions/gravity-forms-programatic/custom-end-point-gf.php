@@ -1,7 +1,7 @@
 <?php
 
 /**
- * On manipule les forms de GF derrière des endpoints custom, et GFAPI. Cela nous permet d'ajouter de la logique custom
+ * On manipule les forms de GF derrière des endpoints custom, et GFAPI. Cela nous permet d'ajouter de la logique custom et des nonces
  */
 
 /**
@@ -61,9 +61,6 @@ function get_my_gf_form(WP_REST_Request $request)
     $path_parameter = $request->get_url_params();
     $id_form = $path_parameter['form_id'];
 
-
-    $response = 'Voici ton nonce pour le form ' . $id_form;
-
     //On récupere le form
     $target_form = GFAPI::get_form($id_form);
 
@@ -74,6 +71,7 @@ function get_my_gf_form(WP_REST_Request $request)
             array('status' => 400)
         );
 
+    //On créé un nonce
     $nonce = wp_create_nonce('get_my_gf_form_' . $id_form);
 
     $response = array(
@@ -94,7 +92,7 @@ function post_my_gf_form(WP_REST_Request $request)
 
     //On vérifie le nonce
     $nonce = $request['nonce'];
-    if( false === wp_verify_nonce($nonce, 'get_my_gf_form_' . $form)){
+    if (false === wp_verify_nonce($nonce, 'get_my_gf_form_' . $form)) {
         return new WP_Error(
             'invalid_data',
             __('I do not trust you !'),
@@ -111,8 +109,6 @@ function post_my_gf_form(WP_REST_Request $request)
             __('Ressource introuvable'),
             array('status' => 400)
         );
-
-    $response = 'Hello ' . $user->user_nicename . ', voyons ce que tu veux poster sur le form  ' . $form;
 
     //Retrouve les paramètres du form dans le body
     //On récupères les inputs passés dans le corps de la méthode sous format JSON
