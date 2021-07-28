@@ -50,8 +50,43 @@ add_action('gform_after_submission', 'set_post_content', 10, 2);
 function set_post_content($entry, $form)
 {
 
-    //On retrouve bien notre valeur par nom dans l'entrée
-    $field_value = value_by_field_input_name($entry, $form, 'foobar');
+    //On récupere l'id du logement dans le formulaire
+    $id_logement = 36;
+
+    //Premiere création
+    $id_declaration = null;
+
+    if (!isset($id_declaration)) {
+
+        //On attache l'entry a l'hebergement
+        update_post_meta($id_logement, 'entry', $entry['id']);
+        //On attache la ref du logement à l'entrée
+        gform_add_meta($entry['id'], 'logement', $id_logement, $form['id']);
+    } else {
+
+        //Todo
+        dump('Mettre à jour la déclaration liée au logement');
+    }
+
+    dump($entry);
+}
+
+
+/**
+ * Pour afficher les metas d'une déclaration, proposer aussi un lien vers le logement associé
+ */
+
+add_action('add_meta_boxes', 'initialisation_metaboxes');
+function initialisation_metaboxes()
+{
+    add_meta_box('id_ma_meta', 'Ma metabox', 'display_metas_on_logement', 'logement', 'normal', 'low');
+}
+
+
+function extract_tunnel_meta_from_entry($entry)
+{
+
+    $form = GFAPI::get_form($entry['form_id']);
 
     //Recupere la liste des entrées du form et les ranger dans une liste avec la clé (input_name) valeur(input user)
     $values = array();
@@ -77,64 +112,49 @@ function set_post_content($entry, $form)
         return in_array($key, $tunnel_keys);
     }, ARRAY_FILTER_USE_KEY);
 
-
-    //On récupere l'id du logement dans le formulaire
-    $id_logement = 36;
-
-    //Si :
-    // - un id de déclaration : si la declaration est perimée on refuse de mettre à jour la déclaration, il faut en créer une nouvelle
-    //                          si elle n'est pas périmée on met a jour directement la declaration
-    // - pas d'id de déclaration : premiere soumission, on cree une déclaration et on l'attache au logement 
-
-    $id_declaration = null;
-
-    if (!isset($id_declaration)) {
-
-        //On cree une nouvelle déclaration, on attache les métas
-        $id_created_declaration = wp_insert_post(array(
-            'post_title' => 'Declaration ' . date('Y-m-d'),
-            'post_type' => 'declaration',
-            'meta_input' => array(
-                'tunnel_data' => $tunnel_data
-            )
-        ));
-
-        //Les metas sont sauvées
-        // dump(get_post_meta($id, 'tunnel_data', true));
-
-        //On attache le post a l'hebergement
-        add_post_meta($id_logement, 'declaration', $id_created_declaration);
-    } else {
-
-        //Todo
-        dump('Mettre à jour la déclaration liée au logement');
-    }
-
-
-
-    dump($values);
+    return $tunnel_data;
 }
-
 
 /**
- * Pour afficher les metas d'une déclaration, proposer aussi un lien vers le logement associé
+ * Affiche métas sur un post (meta du tunnel)
  */
-
-add_action('add_meta_boxes', 'initialisation_metaboxes');
-function initialisation_metaboxes()
-{
-    add_meta_box('id_ma_meta', 'Ma metabox', 'display_metas_on_logement', 'declaration', 'normal', 'high');
-}
-
 function display_metas_on_logement($post)
 {
-
-    $id_declaration = get_post_meta($post->ID, 'declaration');
-    dump($id_declaration);
-    $tunnel_data = get_post_meta($id_declaration, 'tunnel_data', true);
-    dump($tunnel_data);
-    echo '<p>Voici les métas du tunnel</p>';
+    $entry_id = get_post_meta($post->ID, 'entry', true);
+    $entry = GFAPI::get_entry($entry_id);
+    $tunnel_data = extract_tunnel_meta_from_entry($entry);
+    echo '<p>Voici les métas du tunnel stockés dans l entry</p>';
     foreach ($tunnel_data as $name => $value) {
         echo "<div>{$name} : {$value}</div>";
     }
+}
+
+/**
+ * Hook pour ajouter une metabox sur une entrée
+ */
+add_filter( 'gform_entry_detail_meta_boxes', 'register_ur_meta_box', 10, 3 );
+function register_ur_meta_box($metabox, $entry, $form){
+    if ( ! isset( $meta_boxes['logement'] ) ) {
+        $meta_boxes['logement'] = array(
+            'title'         => esc_html__( 'Logement Details', 'gravityforms' ),
+            'callback'      => 'display_link_to_logement',
+            'context'       => 'side',
+            'callback_args' => array( $entry, $form ),
+        );
+    }
+ 
+    return $meta_boxes;
+}
+
+/**
+ * Afficher les métas sur une entrée (lien vers logement etc...)
+ */
+function display_link_to_logement($args){
+    $form  = $args['form'];
+    $entry = $args['entry'];
+    $logement_id = gform_get_meta($entry['id'],'logement');
+    $logement = get_post($logement_id);
+    $permalink = get_edit_post_link($logement_id);
+    $html   = '<p>Logement : ' . $logement->post_title .' <a href="' . $permalink .'">Voir le logement</a> <p>';
+    echo $html;
 }
