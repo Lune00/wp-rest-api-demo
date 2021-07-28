@@ -8,4 +8,10 @@ Un projet monté en local, servant d'origine d'un projet front qui viendra conso
 
 L'origine est définie par le protocole, le nom de domaine et le port. On peut donc remonter le projet sur différents ports pour simuler différentes origines.
 
-`php -S localhost:8000 -t playground/`
+#### Tests sur la sécurité
+
+`php -S localhost:8000 -t playground/security/`
+
+#### Tests sur Gravity Forms
+
+`php -S localhost:8000 -t playground/gravity-forms/`

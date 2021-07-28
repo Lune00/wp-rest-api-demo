@@ -1,0 +1,1 @@
+On test ici l'authentification et la CORS policy
