@@ -1,0 +1,42 @@
+[
+    {
+        "id": "enceinte_connectee",
+        "label": "Enceinte connectée",
+        "weight": {
+            "lifetime": 5,
+            "indicatorValues": {
+                "changement_climatique": 7.4,
+                "ressources_fossiles": 100.677902,
+                "ressources_minerales": 0.000879116372425
+            }
+        },
+        "field": {
+            "type": "number",
+            "label": "Enceinte connectée",
+            "inputName": "enceinte_connectee",
+            "defaultValue": "",
+            "prepopulate_field_setting": true,
+            "rangeMin" : 0
+        }
+    },
+    {
+        "id": "bouilloire_electrique",
+        "label": "Bouilloire Électrique",
+        "weight": {
+            "lifetime": 5,
+            "indicatorValues": {
+                "changement_climatique": 7.4,
+                "ressources_fossiles": 100.677902,
+                "ressources_minerales": 0.000879116372425
+            }
+        },
+        "field": {
+            "type": "number",
+            "label": "Bouilloire Électrique",
+            "inputName": "bouilloire_electrique",
+            "defaultValue": "",
+            "prepopulate_field_setting": true,
+            "rangeMin" : 0
+        }
+    }
+]
