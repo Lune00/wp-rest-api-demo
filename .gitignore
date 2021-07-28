@@ -43,3 +43,7 @@ node_modules
 .DS_Store
 .idea/
 _notes
+
+#Exlude vendor for unittesting
+vendor/
+wp-cli.phar

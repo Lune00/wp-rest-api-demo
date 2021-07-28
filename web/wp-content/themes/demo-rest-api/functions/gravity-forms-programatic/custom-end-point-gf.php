@@ -124,5 +124,8 @@ function post_my_gf_form(WP_REST_Request $request)
     //WARNING : Gravity Forms ne sanitize pas les tags !!! BUG??
     $submission = GFAPI::submit_form($form, $clean);
 
+    //Si c'est valide, faire de la logique supplémentaire au besoin
+
     return rest_ensure_response($submission);
 }
+

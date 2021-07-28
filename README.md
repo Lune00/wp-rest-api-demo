@@ -693,3 +693,21 @@ Problèmes trouvés :
 ## Solution pour GF 
 
 On va masquer les soumissions de forms par des endpoints customs, car des pb avec l'API de GF, notamment d'authentification.
+
+
+
+## Tests d'intégration (plugins) WIP
+
+Source utile pour faires les tests d'integration ds un env dockerisé : https://carlosguzman.dev/running-phpunit-tests-in-a-wordpress-plugin-with-docker/
+
+### Setup
+
+Se placer à la racine du projet
+
+- Installer Composer
+- Installer phpunit : `composer require --dev phpunit/phpunit ^9`
+- Installer wp cli : `curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar`
+- Rendre wp cli global en le mettant sur le PATH : `chmod +x wp-cli.phar` puis `sudo mv wp-cli.phar /usr/local/bin/wp`
+- creer un dossier plugin `monplugin` dans le dossier `plugins`
+
+Se déplacer dans le dossier du plugin et lancer `wp scaffold plugin-tests monplugin`.
